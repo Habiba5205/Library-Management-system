@@ -1,0 +1,92 @@
+Library Management System MVC - Handoff Status
+
+Current stopping point:
+The project foundation and database setup are finished. The next person should start building the MVC CRUD pages.
+
+Finished work:
+1. Created an ASP.NET Core MVC project.
+2. Connected the project to the GitHub repository:
+   https://github.com/Habiba5205/Library-Management-system.git
+3. Created the main models from the ERD:
+   - Role
+   - User
+   - Book
+   - Author
+   - Category
+   - BookAuthor
+   - Borrowing
+   - Payment
+4. Installed Entity Framework Core packages:
+   - Microsoft.EntityFrameworkCore.SqlServer
+   - Microsoft.EntityFrameworkCore.Tools
+5. Created ApplicationDbContext in the Data folder.
+6. Added DbSet properties for all models.
+7. Configured database relationships:
+   - Role to Users
+   - Category to Books
+   - User/Manager to Books
+   - Book to Author using BookAuthor
+   - User to Borrowings
+   - Book to Borrowings
+   - Borrowing to Payments
+8. Added unique indexes for:
+   - RoleName
+   - Email
+   - Username
+   - ISBN
+9. Added decimal precision for:
+   - Book.Price
+   - Payment.Amount
+10. Added seed data for roles:
+   - Admin
+   - Manager
+   - Member
+11. Added SQL Server connection string in appsettings.json.
+12. Created the first EF Core migration:
+   InitialCreate
+13. Created the local database:
+   LibSystemMvcDb
+14. Added NuGet.config so packages restore into the project-local .nuget-packages folder.
+15. Verified the project builds successfully with 0 errors and 0 warnings.
+
+Database location:
+Use SQL Server Object Explorer or SQL Server Management Studio.
+
+Server:
+(localdb)\MSSQLLocalDB
+
+Database:
+LibSystemMvcDb
+
+Expected tables:
+- Authors
+- Categories
+- Roles
+- Users
+- Books
+- BookAuthors
+- Borrowings
+- Payments
+- __EFMigrationsHistory
+
+Useful commands for teammate after pulling:
+dotnet restore
+dotnet tool restore
+dotnet tool run dotnet-ef database update
+dotnet build
+
+Next step:
+Start building MVC CRUD pages.
+
+Recommended order:
+1. Categories CRUD
+2. Authors CRUD
+3. Books CRUD with category and author selection
+4. Users or Members CRUD
+5. Borrowing and return flow
+6. Payments
+7. Navbar and UI polish
+
+Important note:
+The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.
+
