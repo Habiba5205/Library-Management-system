@@ -90,3 +90,21 @@ Recommended order:
 Important note:
 The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.
 
+---
+
+Update: Category CRUD
+
+Finished:
+1. Built CategoryController with full CRUD (Index, Details, Create, Edit, Delete).
+2. Built matching Razor views under Views/Category.
+3. Delete action prevents removing a category that still has books
+   assigned to it (checks Book.CategoryId before deleting).
+4. Added "Categories" link to the navbar in _Layout.cshtml.
+5. Created the local database on second dev machine using the existing
+   InitialCreate migration (dotnet tool run dotnet-ef database update).
+6. Tested full flow locally: create category, view details, edit, delete.
+   All working as expected.
+
+Next step:
+Authors CRUD (same pattern as Categories), then Books CRUD with
+category/author selection.
