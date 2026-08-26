@@ -48,6 +48,19 @@ Finished work:
    LibSystemMvcDb
 14. Added NuGet.config so packages restore into the project-local .nuget-packages folder.
 15. Verified the project builds successfully with 0 errors and 0 warnings.
+16. Built CategoryController with full CRUD (Index, Details, Create, Edit, Delete).
+17. Built matching Razor views under Views/Category.
+18. Category delete blocks removal if the category still has books
+    assigned to it (Book.CategoryId, Restrict on delete).
+19. Built AuthorController with full CRUD (Index, Details, Create, Edit, Delete).
+20. Built matching Razor views under Views/Author.
+21. Author Details page shows all books linked via BookAuthor.
+22. Author delete warns (but does not block) if the author has linked
+    books, since BookAuthor -> Author cascades on delete: it removes
+    the link rows only, not the books themselves.
+23. Added "Categories" and "Authors" links to the navbar in _Layout.cshtml.
+24. Tested locally: Category and Author CRUD both confirmed working
+    end-to-end (create, view, edit, delete).
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -76,12 +89,17 @@ dotnet tool run dotnet-ef database update
 dotnet build
 
 Next step:
-Start building MVC CRUD pages.
+Start building Books CRUD pages.
 
 Recommended order:
-1. Categories CRUD
-2. Authors CRUD
-3. Books CRUD with category and author selection
+1. Categories CRUD -- DONE
+2. Authors CRUD -- DONE
+3. Books CRUD with category and author selection -- IN PROGRESS
+   - Category dropdown (single select, FK)
+   - Author multi-select (many-to-many via BookAuthor)
+   - Manager dropdown (optional, FK to User)
+   - Search by title/ISBN, filter by category/author
+   - AvailabilityStatus display
 4. Users or Members CRUD
 5. Borrowing and return flow
 6. Payments
@@ -108,3 +126,18 @@ Finished:
 Next step:
 Authors CRUD (same pattern as Categories), then Books CRUD with
 category/author selection.
+
+---
+
+Update: Author CRUD
+
+Finished:
+1. Built AuthorController with full CRUD (Index, Details, Create, Edit, Delete).
+2. Built matching Razor views under Views/Author.
+3. Details page shows all books linked to the author via BookAuthor.
+4. Delete page warns if the author has linked books (lists them), since
+   BookAuthor -> Author cascades on delete: deleting an author removes
+   the BookAuthor link rows but does NOT delete the books themselves.
+   Unlike Category, this delete is not blocked, only flagged.
+5. Added "Authors" link to the navbar in _Layout.cshtml.
+6. Tested locally: create, view details, edit, delete all confirmed working.
