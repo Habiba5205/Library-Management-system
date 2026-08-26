@@ -1,0 +1,40 @@
+@model Lib_System.Models.Author
+
+@{
+    ViewData["Title"] = "Author Details";
+}
+
+<h1>Author Details</h1>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Name)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Name)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Biography)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Biography)</dd>
+    </dl>
+</div>
+
+<h3>Books written by this author</h3>
+
+@if (Model.BookAuthors != null && Model.BookAuthors.Any())
+{
+    <ul class="list-group">
+        @foreach (var bookAuthor in Model.BookAuthors)
+        {
+            <li class="list-group-item">
+                @bookAuthor.Book?.Title (@bookAuthor.Book?.PublicationYear)
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p><em>No books linked to this author yet.</em></p>
+}
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.AuthorId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
