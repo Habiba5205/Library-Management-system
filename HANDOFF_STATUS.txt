@@ -1,7 +1,8 @@
 Library Management System MVC - Handoff Status
 
 Current stopping point:
-The project foundation and database setup are finished. The next person should start building the MVC CRUD pages.
+Full catalog CRUD complete: Categories, Authors, and Books (with category/author 
+selection, search, and filtering). Users/Members CRUD is next.
 
 Finished work:
 1. Created an ASP.NET Core MVC project.
@@ -58,9 +59,22 @@ Finished work:
 22. Author delete warns (but does not block) if the author has linked
     books, since BookAuthor -> Author cascades on delete: it removes
     the link rows only, not the books themselves.
-23. Added "Categories" and "Authors" links to the navbar in _Layout.cshtml.
-24. Tested locally: Category and Author CRUD both confirmed working
-    end-to-end (create, view, edit, delete).
+23. Built BookController with full CRUD (Index, Details, Create, Edit, Delete).
+24. Added a BookFormViewModel (ViewModels folder) to handle the Category
+    dropdown, optional Manager dropdown, and Author multi-select checkboxes
+    on Create/Edit, since these can't bind directly to the Book entity.
+25. Book Index supports search by title/ISBN and filtering by category
+    and author.
+26. Manager dropdown is scoped to Users where Role.RoleName == "Manager".
+27. AvailabilityStatus uses a fixed dropdown: Available, Borrowed,
+    Reserved, Unavailable (not defined by the ERD, agreed as a working set).
+28. Book delete is blocked if the book has borrowing history
+    (Borrowing.BookId, Restrict on delete) - Delete button disables
+    and shows a message instead.
+29. Added "Categories", "Authors", and "Books" links to the navbar in
+    _Layout.cshtml.
+30. Tested locally: Category, Author, and Book CRUD all confirmed working
+    end-to-end (create, view, edit, delete, search, filter).
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -89,18 +103,13 @@ dotnet tool run dotnet-ef database update
 dotnet build
 
 Next step:
-Start building Books CRUD pages.
+Start building Users/Members CRUD.
 
 Recommended order:
 1. Categories CRUD -- DONE
 2. Authors CRUD -- DONE
-3. Books CRUD with category and author selection -- IN PROGRESS
-   - Category dropdown (single select, FK)
-   - Author multi-select (many-to-many via BookAuthor)
-   - Manager dropdown (optional, FK to User)
-   - Search by title/ISBN, filter by category/author
-   - AvailabilityStatus display
-4. Users or Members CRUD
+3. Books CRUD with category and author selection -- DONE
+4. Users or Members CRUD -- IN PROGRESS
 5. Borrowing and return flow
 6. Payments
 7. Navbar and UI polish
@@ -108,36 +117,10 @@ Recommended order:
 Important note:
 The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.
 
----
-
-Update: Category CRUD
-
-Finished:
-1. Built CategoryController with full CRUD (Index, Details, Create, Edit, Delete).
-2. Built matching Razor views under Views/Category.
-3. Delete action prevents removing a category that still has books
-   assigned to it (checks Book.CategoryId before deleting).
-4. Added "Categories" link to the navbar in _Layout.cshtml.
-5. Created the local database on second dev machine using the existing
-   InitialCreate migration (dotnet tool run dotnet-ef database update).
-6. Tested full flow locally: create category, view details, edit, delete.
-   All working as expected.
-
-Next step:
-Authors CRUD (same pattern as Categories), then Books CRUD with
-category/author selection.
-
----
-
-Update: Author CRUD
-
-Finished:
-1. Built AuthorController with full CRUD (Index, Details, Create, Edit, Delete).
-2. Built matching Razor views under Views/Author.
-3. Details page shows all books linked to the author via BookAuthor.
-4. Delete page warns if the author has linked books (lists them), since
-   BookAuthor -> Author cascades on delete: deleting an author removes
-   the BookAuthor link rows but does NOT delete the books themselves.
-   Unlike Category, this delete is not blocked, only flagged.
-5. Added "Authors" link to the navbar in _Layout.cshtml.
-6. Tested locally: create, view details, edit, delete all confirmed working.
+Known gaps / things to watch:
+- No Users exist in the database yet, so the Manager dropdown on Books
+  is currently empty. Once Users CRUD exists and a Manager-role user is
+  added, go back and re-test the Book Create/Edit Manager dropdown.
+- PasswordHash on User is a plain string field for now - if login/auth
+  gets added later, this needs real password hashing (not just a
+  plaintext string being called "PasswordHash").

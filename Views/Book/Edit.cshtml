@@ -1,0 +1,97 @@
+@model Lib_System.ViewModels.BookFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Book";
+}
+
+<h1>Edit Book</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="BookId" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ISBN" class="control-label"></label>
+                <input asp-for="ISBN" class="form-control" />
+                <span asp-validation-for="ISBN" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 form-group mb-3">
+                    <label asp-for="PublicationYear" class="control-label"></label>
+                    <input asp-for="PublicationYear" class="form-control" />
+                    <span asp-validation-for="PublicationYear" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 form-group mb-3">
+                    <label asp-for="Price" class="control-label"></label>
+                    <input asp-for="Price" class="form-control" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 form-group mb-3">
+                    <label asp-for="AvailabilityStatus" class="control-label"></label>
+                    <select asp-for="AvailabilityStatus" class="form-select">
+                        <option value="Available">Available</option>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Reserved">Reserved</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+                    <span asp-validation-for="AvailabilityStatus" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="CategoryId" class="control-label"></label>
+                <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                    <option value="">-- Select Category --</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ManagerId" class="control-label"></label>
+                <select asp-for="ManagerId" asp-items="Model.Managers" class="form-select">
+                    <option value="">-- Unassigned --</option>
+                </select>
+                <span asp-validation-for="ManagerId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="SelectedAuthorIds" class="control-label"></label>
+                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                    @foreach (var author in Model.AllAuthors)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="SelectedAuthorIds" value="@author.AuthorId"
+                                   id="author_@author.AuthorId"
+                                   checked="@(Model.SelectedAuthorIds.Contains(author.AuthorId))" />
+                            <label class="form-check-label" for="author_@author.AuthorId">
+                                @author.Name
+                            </label>
+                        </div>
+                    }
+                </div>
+                <span asp-validation-for="SelectedAuthorIds" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

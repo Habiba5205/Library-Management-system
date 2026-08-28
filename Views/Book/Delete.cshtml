@@ -1,0 +1,49 @@
+@model Lib_System.Models.Book
+
+@{
+    ViewData["Title"] = "Delete Book";
+}
+
+<h1>Delete Book</h1>
+
+<h3 class="text-danger">Are you sure you want to delete this book?</h3>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value.Errors))
+        {
+            <p class="mb-0">@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Title</dt>
+        <dd class="col-sm-9">@Model.Title</dd>
+
+        <dt class="col-sm-3">ISBN</dt>
+        <dd class="col-sm-9">@Model.ISBN</dd>
+
+        <dt class="col-sm-3">Category</dt>
+        <dd class="col-sm-9">@(Model.Category?.Name ?? "-")</dd>
+    </dl>
+</div>
+
+@{
+    bool hasBorrowings = Model.Borrowings != null && Model.Borrowings.Any();
+}
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="BookId" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@(hasBorrowings ? "disabled" : null)" />
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@if (hasBorrowings)
+{
+    <p class="text-muted mt-2">
+        <em>Delete is disabled because this book has borrowing history.</em>
+    </p>
+}

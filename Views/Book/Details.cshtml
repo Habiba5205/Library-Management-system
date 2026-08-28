@@ -1,0 +1,53 @@
+@model Lib_System.Models.Book
+
+@{
+    ViewData["Title"] = "Book Details";
+}
+
+<h1>Book Details</h1>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Title</dt>
+        <dd class="col-sm-9">@Model.Title</dd>
+
+        <dt class="col-sm-3">ISBN</dt>
+        <dd class="col-sm-9">@Model.ISBN</dd>
+
+        <dt class="col-sm-3">Publication Year</dt>
+        <dd class="col-sm-9">@Model.PublicationYear</dd>
+
+        <dt class="col-sm-3">Price</dt>
+        <dd class="col-sm-9">@Model.Price.ToString("C")</dd>
+
+        <dt class="col-sm-3">Availability</dt>
+        <dd class="col-sm-9">
+            <span class="badge bg-@(Model.AvailabilityStatus == "Available" ? "success" : "secondary")">
+                @Model.AvailabilityStatus
+            </span>
+        </dd>
+
+        <dt class="col-sm-3">Category</dt>
+        <dd class="col-sm-9">@(Model.Category?.Name ?? "-")</dd>
+
+        <dt class="col-sm-3">Manager</dt>
+        <dd class="col-sm-9">@(Model.Manager?.Name ?? "Unassigned")</dd>
+
+        <dt class="col-sm-3">Author(s)</dt>
+        <dd class="col-sm-9">
+            @if (Model.BookAuthors.Any())
+            {
+                @string.Join(", ", Model.BookAuthors.Select(ba => ba.Author?.Name))
+            }
+            else
+            {
+                <em>No authors linked</em>
+            }
+        </dd>
+    </dl>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.BookId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
