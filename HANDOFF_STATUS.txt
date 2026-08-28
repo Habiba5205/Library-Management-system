@@ -1,8 +1,9 @@
 Library Management System MVC - Handoff Status
 
 Current stopping point:
-Full catalog CRUD complete: Categories, Authors, and Books (with category/author 
-selection, search, and filtering). Users/Members CRUD is next.
+Full catalog and user management complete: Categories, Authors, Books (with
+category/author selection, search, filtering), and Users (with real password
+hashing). Borrowing and return flow is next.
 
 Finished work:
 1. Created an ASP.NET Core MVC project.
@@ -71,10 +72,24 @@ Finished work:
 28. Book delete is blocked if the book has borrowing history
     (Borrowing.BookId, Restrict on delete) - Delete button disables
     and shows a message instead.
-29. Added "Categories", "Authors", and "Books" links to the navbar in
-    _Layout.cshtml.
-30. Tested locally: Category, Author, and Book CRUD all confirmed working
-    end-to-end (create, view, edit, delete, search, filter).
+29. Built UserController with full CRUD (Index, Details, Create, Edit, Delete).
+30. Added UserFormViewModel (ViewModels folder) with a plaintext Password
+    field, separate from the stored PasswordHash.
+31. Passwords are hashed with PasswordHasher<User> (Microsoft.AspNetCore.Identity,
+    already available via the Web SDK, no extra NuGet needed). Plaintext
+    password is never stored - only the hash. Verified in SQL Server Object
+    Explorer that PasswordHash is a long hashed string, not plaintext.
+32. Password is required on Create; optional on Edit (blank = keep current
+    password).
+33. User delete is blocked if the user has borrowing history
+    (Borrowing.UserId, Restrict on delete). If the user only manages books,
+    delete is allowed and Book.ManagerId is set to null automatically
+    (SetNull on delete).
+34. Added "Categories", "Authors", "Books", and "Users" links to the
+    navbar in _Layout.cshtml.
+35. Tested locally: Category, Author, Book, and User CRUD all confirmed
+    working end-to-end (create, view, edit, delete, search, filter,
+    password hashing).
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -103,14 +118,14 @@ dotnet tool run dotnet-ef database update
 dotnet build
 
 Next step:
-Start building Users/Members CRUD.
+Start building the Borrowing and return flow.
 
 Recommended order:
 1. Categories CRUD -- DONE
 2. Authors CRUD -- DONE
 3. Books CRUD with category and author selection -- DONE
-4. Users or Members CRUD -- IN PROGRESS
-5. Borrowing and return flow
+4. Users or Members CRUD -- DONE
+5. Borrowing and return flow -- IN PROGRESS
 6. Payments
 7. Navbar and UI polish
 
@@ -118,9 +133,8 @@ Important note:
 The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.
 
 Known gaps / things to watch:
-- No Users exist in the database yet, so the Manager dropdown on Books
-  is currently empty. Once Users CRUD exists and a Manager-role user is
-  added, go back and re-test the Book Create/Edit Manager dropdown.
-- PasswordHash on User is a plain string field for now - if login/auth
-  gets added later, this needs real password hashing (not just a
-  plaintext string being called "PasswordHash").
+- No authentication/login exists yet. Password hashing is in place, but
+  there's no login page, session, or cookie auth wired up - a user's
+  password is stored securely but nothing checks it against anything yet.
+  This may be needed if the instructor requires login, per the original
+  spec's "optional bonus" auth requirement.

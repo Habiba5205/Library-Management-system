@@ -1,0 +1,74 @@
+@model Lib_System.Models.User
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h1>User Details</h1>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Name</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">@Model.Username</dd>
+
+        <dt class="col-sm-3">Phone</dt>
+        <dd class="col-sm-9">@(Model.Phone ?? "-")</dd>
+
+        <dt class="col-sm-3">Address</dt>
+        <dd class="col-sm-9">@(Model.Address ?? "-")</dd>
+
+        <dt class="col-sm-3">Role</dt>
+        <dd class="col-sm-9">@(Model.Role?.RoleName ?? "-")</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            <span class="badge bg-@(Model.Status == "Active" ? "success" : "secondary")">
+                @Model.Status
+            </span>
+        </dd>
+
+        <dt class="col-sm-3">Registration Date</dt>
+        <dd class="col-sm-9">@Model.RegistrationDate.ToShortDateString()</dd>
+    </dl>
+</div>
+
+<h3>Books Managed</h3>
+@if (Model.ManagedBooks != null && Model.ManagedBooks.Any())
+{
+    <ul class="list-group mb-3">
+        @foreach (var book in Model.ManagedBooks)
+        {
+            <li class="list-group-item">@book.Title</li>
+        }
+    </ul>
+}
+else
+{
+    <p><em>Not managing any books.</em></p>
+}
+
+<h3>Borrowing History</h3>
+@if (Model.Borrowings != null && Model.Borrowings.Any())
+{
+    <ul class="list-group mb-3">
+        @foreach (var borrowing in Model.Borrowings)
+        {
+            <li class="list-group-item">@borrowing.Book?.Title - @borrowing.Status</li>
+        }
+    </ul>
+}
+else
+{
+    <p><em>No borrowing history yet.</em></p>
+}
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
