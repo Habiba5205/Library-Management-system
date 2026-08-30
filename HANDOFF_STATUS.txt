@@ -1,9 +1,10 @@
 Library Management System MVC - Handoff Status
 
 Current stopping point:
-Full catalog and user management complete: Categories, Authors, Books (with
-category/author selection, search, filtering), and Users (with real password
-hashing). Borrowing and return flow is next.
+Full catalog, user management, and borrowing flow are complete: Categories,
+Authors, Books (with category/author selection, search, filtering), Users
+(with real password hashing), and Borrowings (borrow/return/history). Payments
+are next.
 
 Finished work:
 1. Created an ASP.NET Core MVC project.
@@ -90,6 +91,18 @@ Finished work:
 35. Tested locally: Category, Author, Book, and User CRUD all confirmed
     working end-to-end (create, view, edit, delete, search, filter,
     password hashing).
+36. Built BorrowingController with Index, Details, Create, and Return actions.
+37. Added BorrowingFormViewModel for selecting an available book, selecting
+    a member, setting the borrow date, and calculating the loan period.
+38. Built matching Razor views under Views/Borrowing.
+39. Borrowing Create blocks unavailable books and only accepts users with the
+    Member role.
+40. Borrowing Create sets the borrowing status to Borrowed, calculates DueDate,
+    and changes Book.AvailabilityStatus to Borrowed.
+41. Return flow sets ReturnDate, changes borrowing status to Returned, and
+    changes Book.AvailabilityStatus back to Available.
+42. Added "Borrowings" link to the navbar.
+43. Smoke-tested Borrowing Index and Create pages locally. Both returned 200 OK.
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -115,18 +128,18 @@ Useful commands for teammate after pulling:
 dotnet restore
 dotnet tool restore
 dotnet tool run dotnet-ef database update
-dotnet build
+dotnet build Lib_System.csproj
 
 Next step:
-Start building the Borrowing and return flow.
+Start building Payments.
 
 Recommended order:
 1. Categories CRUD -- DONE
 2. Authors CRUD -- DONE
 3. Books CRUD with category and author selection -- DONE
 4. Users or Members CRUD -- DONE
-5. Borrowing and return flow -- IN PROGRESS
-6. Payments
+5. Borrowing and return flow -- DONE
+6. Payments -- NEXT
 7. Navbar and UI polish
 
 Important note:
@@ -138,3 +151,6 @@ Known gaps / things to watch:
   password is stored securely but nothing checks it against anything yet.
   This may be needed if the instructor requires login, per the original
   spec's "optional bonus" auth requirement.
+- Plain `dotnet build` may ask for a project/solution choice because the
+  folder now contains both a project file and a solution file. Use
+  `dotnet build Lib_System.csproj`.

@@ -1,0 +1,32 @@
+@model Lib_System.Models.Borrowing
+
+@{
+    ViewData["Title"] = "Return Book";
+}
+
+<h1>Return Book</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="alert alert-info">
+    Confirm returning <strong>@Model.Book?.Title</strong> borrowed by
+    <strong>@Model.User?.Name</strong>.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Borrow Date</dt>
+    <dd class="col-sm-9">@Model.BorrowDate.ToString("yyyy-MM-dd")</dd>
+
+    <dt class="col-sm-3">Due Date</dt>
+    <dd class="col-sm-9">@Model.DueDate.ToString("yyyy-MM-dd")</dd>
+
+    <dt class="col-sm-3">Current Status</dt>
+    <dd class="col-sm-9">@Model.Status</dd>
+</dl>
+
+<form asp-action="Return">
+    <input type="hidden" asp-for="BorrowingId" />
+    <input type="submit" value="Confirm Return" class="btn btn-success" />
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+

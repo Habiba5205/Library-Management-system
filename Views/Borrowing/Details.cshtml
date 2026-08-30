@@ -1,0 +1,63 @@
+@model Lib_System.Models.Borrowing
+
+@{
+    ViewData["Title"] = "Borrowing Details";
+}
+
+<h1>Borrowing Details</h1>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Book</dt>
+        <dd class="col-sm-9">@Model.Book?.Title</dd>
+
+        <dt class="col-sm-3">ISBN</dt>
+        <dd class="col-sm-9">@Model.Book?.ISBN</dd>
+
+        <dt class="col-sm-3">Category</dt>
+        <dd class="col-sm-9">@(Model.Book?.Category?.Name ?? "-")</dd>
+
+        <dt class="col-sm-3">Author(s)</dt>
+        <dd class="col-sm-9">
+            @if (Model.Book?.BookAuthors.Any() == true)
+            {
+                @string.Join(", ", Model.Book.BookAuthors.Select(ba => ba.Author?.Name))
+            }
+            else
+            {
+                <em>No authors linked</em>
+            }
+        </dd>
+
+        <dt class="col-sm-3">Member</dt>
+        <dd class="col-sm-9">@Model.User?.Name</dd>
+
+        <dt class="col-sm-3">Borrow Date</dt>
+        <dd class="col-sm-9">@Model.BorrowDate.ToString("yyyy-MM-dd")</dd>
+
+        <dt class="col-sm-3">Due Date</dt>
+        <dd class="col-sm-9">@Model.DueDate.ToString("yyyy-MM-dd")</dd>
+
+        <dt class="col-sm-3">Return Date</dt>
+        <dd class="col-sm-9">@(Model.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            <span class="badge bg-@(Model.Status == "Borrowed" ? "warning" : "success")">
+                @Model.Status
+            </span>
+        </dd>
+
+        <dt class="col-sm-3">Payments</dt>
+        <dd class="col-sm-9">@Model.Payments.Count</dd>
+    </dl>
+</div>
+
+<div class="mt-3">
+    @if (Model.Status != "Returned")
+    {
+        <a asp-action="Return" asp-route-id="@Model.BorrowingId" class="btn btn-success">Return Book</a>
+    }
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
+
