@@ -164,12 +164,3 @@ ViewModels/
 Views/
 wwwroot/
 ```
-
-## Notes
-
-- This is an MVC project, so controllers return Razor Views.
-- The project does not use React.
-- The project does not use Web API controllers or JWT.
-- Authentication uses cookies because this is a browser-based MVC app.
-- Passwords are stored as hashes, not plaintext.
-
