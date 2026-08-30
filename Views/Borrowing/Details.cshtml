@@ -54,10 +54,10 @@
 </div>
 
 <div class="mt-3">
+    <a asp-controller="Payment" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-primary">Add Payment</a>
     @if (Model.Status != "Returned")
     {
         <a asp-action="Return" asp-route-id="@Model.BorrowingId" class="btn btn-success">Return Book</a>
     }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
-
