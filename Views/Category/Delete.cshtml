@@ -11,7 +11,7 @@
 @if (!ViewData.ModelState.IsValid)
 {
     <div class="alert alert-danger">
-        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value.Errors))
+        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value?.Errors ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>()))
         {
             <p>@error.ErrorMessage</p>
         }

@@ -11,7 +11,7 @@
 @if (!ViewData.ModelState.IsValid)
 {
     <div class="alert alert-danger">
-        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value.Errors))
+        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value?.Errors ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>()))
         {
             <p class="mb-0">@error.ErrorMessage</p>
         }
@@ -33,13 +33,14 @@
 
 @{
     bool hasBorrowings = Model.Borrowings != null && Model.Borrowings.Any();
-    bool hasManagedBooks = Model.ManagedBooks != null && Model.ManagedBooks.Any();
+    var managedBookCount = Model.ManagedBooks?.Count ?? 0;
+    bool hasManagedBooks = managedBookCount > 0;
 }
 
 @if (hasManagedBooks)
 {
     <div class="alert alert-warning">
-        <strong>Heads up:</strong> this user manages @Model.ManagedBooks.Count book(s).
+        <strong>Heads up:</strong> this user manages @managedBookCount book(s).
         Deleting them will unassign those books (the books themselves are not deleted).
     </div>
 }
