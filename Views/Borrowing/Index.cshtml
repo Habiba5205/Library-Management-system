@@ -6,9 +6,12 @@
 
 <h1>Borrowings</h1>
 
+@if (User.IsInRole("Manager") || User.IsInRole("Member"))
+{
 <p>
     <a asp-action="Create" class="btn btn-primary">+ Borrow Book</a>
 </p>
+}
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
@@ -52,7 +55,7 @@
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-info">Details</a>
-                @if (item.Status != "Returned")
+                @if (item.Status != "Returned" && (User.IsInRole("Manager") || User.IsInRole("Member")))
                 {
                     <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">Return</a>
                 }
@@ -61,4 +64,3 @@
 }
     </tbody>
 </table>
-

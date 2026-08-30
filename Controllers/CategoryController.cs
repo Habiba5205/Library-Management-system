@@ -15,12 +15,14 @@ namespace Lib_System.Controllers
         }
 
         // GET: Category
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Categories.ToListAsync());
         }
 
         // GET: Category/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -35,6 +37,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Category/Create
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public IActionResult Create()
         {
             return View();
@@ -43,6 +46,7 @@ namespace Lib_System.Controllers
         // POST: Category/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create([Bind("CategoryId,Name,Description")] Category category)
         {
             if (ModelState.IsValid)
@@ -55,6 +59,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Category/Edit/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -68,6 +73,7 @@ namespace Lib_System.Controllers
         // POST: Category/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, [Bind("CategoryId,Name,Description")] Category category)
         {
             if (id != category.CategoryId) return NotFound();
@@ -90,6 +96,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Category/Delete/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -104,6 +111,7 @@ namespace Lib_System.Controllers
         // POST: Category/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var category = await _context.Categories.FindAsync(id);

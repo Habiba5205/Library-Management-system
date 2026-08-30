@@ -48,6 +48,13 @@
 </div>
 
 <div class="mt-3">
+    @if (User.IsInRole("Member") && Model.AvailabilityStatus == "Available")
+    {
+        <a asp-controller="Borrowing" asp-action="Create" asp-route-bookId="@Model.BookId" class="btn btn-success">Borrow Book</a>
+    }
+    @if (User.IsInRole("Manager"))
+    {
     <a asp-action="Edit" asp-route-id="@Model.BookId" class="btn btn-warning">Edit</a>
+    }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

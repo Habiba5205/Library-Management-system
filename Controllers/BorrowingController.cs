@@ -4,6 +4,7 @@ using Lib_System.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Lib_System.Controllers
 {
@@ -17,12 +18,19 @@ namespace Lib_System.Controllers
         }
 
         // GET: Borrowing
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Index(string? status)
         {
             var borrowingsQuery = _context.Borrowings
                 .Include(b => b.Book)
                 .Include(b => b.User)
                 .AsQueryable();
+
+            if (User.IsInRole("Member"))
+            {
+                var currentUserId = GetCurrentUserId();
+                borrowingsQuery = borrowingsQuery.Where(b => b.UserId == currentUserId);
+            }
 
             if (!string.IsNullOrWhiteSpace(status))
             {
@@ -38,6 +46,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Borrowing/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -54,13 +63,29 @@ namespace Lib_System.Controllers
 
             if (borrowing == null) return NotFound();
 
+            if (User.IsInRole("Member") && borrowing.UserId != GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
             return View(borrowing);
         }
 
         // GET: Borrowing/Create
-        public async Task<IActionResult> Create()
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager,Member")]
+        public async Task<IActionResult> Create(int? bookId)
         {
             var vm = new BorrowingFormViewModel();
+            if (bookId.HasValue)
+            {
+                vm.BookId = bookId.Value;
+            }
+
+            if (User.IsInRole("Member"))
+            {
+                vm.UserId = GetCurrentUserId();
+            }
+
             await PopulateDropdownsAsync(vm);
             return View(vm);
         }
@@ -68,8 +93,14 @@ namespace Lib_System.Controllers
         // POST: Borrowing/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager,Member")]
         public async Task<IActionResult> Create(BorrowingFormViewModel vm)
         {
+            if (User.IsInRole("Member"))
+            {
+                vm.UserId = GetCurrentUserId();
+            }
+
             var book = await _context.Books.FindAsync(vm.BookId);
             if (book == null)
             {
@@ -110,6 +141,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Borrowing/Return/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager,Member")]
         public async Task<IActionResult> Return(int? id)
         {
             if (id == null) return NotFound();
@@ -121,12 +153,18 @@ namespace Lib_System.Controllers
 
             if (borrowing == null) return NotFound();
 
+            if (User.IsInRole("Member") && borrowing.UserId != GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
             return View(borrowing);
         }
 
         // POST: Borrowing/Return/5
         [HttpPost, ActionName("Return")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager,Member")]
         public async Task<IActionResult> ReturnConfirmed(int id)
         {
             var borrowing = await _context.Borrowings
@@ -134,6 +172,11 @@ namespace Lib_System.Controllers
                 .FirstOrDefaultAsync(b => b.BorrowingId == id);
 
             if (borrowing == null) return RedirectToAction(nameof(Index));
+
+            if (User.IsInRole("Member") && borrowing.UserId != GetCurrentUserId())
+            {
+                return Forbid();
+            }
 
             if (borrowing.Status == "Returned")
             {
@@ -162,13 +205,24 @@ namespace Lib_System.Controllers
                     .ToListAsync(),
                 "BookId", "Title", vm.BookId);
 
+            var membersQuery = _context.Users
+                .Where(u => u.Role != null && u.Role.RoleName == "Member");
+
+            if (User.IsInRole("Member"))
+            {
+                var currentUserId = GetCurrentUserId();
+                membersQuery = membersQuery.Where(u => u.UserId == currentUserId);
+            }
+
             vm.Members = new SelectList(
-                await _context.Users
-                    .Where(u => u.Role != null && u.Role.RoleName == "Member")
-                    .OrderBy(u => u.Name)
-                    .ToListAsync(),
+                await membersQuery.OrderBy(u => u.Name).ToListAsync(),
                 "UserId", "Name", vm.UserId);
+        }
+
+        private int GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(value, out var userId) ? userId : 0;
         }
     }
 }
-

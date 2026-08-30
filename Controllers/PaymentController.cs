@@ -4,6 +4,7 @@ using Lib_System.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Lib_System.Controllers
 {
@@ -17,6 +18,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Payment
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Index(string? status)
         {
             var paymentsQuery = _context.Payments
@@ -25,6 +27,12 @@ namespace Lib_System.Controllers
                 .Include(p => p.Borrowing)
                     .ThenInclude(b => b!.User)
                 .AsQueryable();
+
+            if (User.IsInRole("Member"))
+            {
+                var currentUserId = GetCurrentUserId();
+                paymentsQuery = paymentsQuery.Where(p => p.Borrowing != null && p.Borrowing.UserId == currentUserId);
+            }
 
             if (!string.IsNullOrWhiteSpace(status))
             {
@@ -40,6 +48,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Payment/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -53,10 +62,16 @@ namespace Lib_System.Controllers
 
             if (payment == null) return NotFound();
 
+            if (User.IsInRole("Member") && payment.Borrowing?.UserId != GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
             return View(payment);
         }
 
         // GET: Payment/Create
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(int? borrowingId)
         {
             var vm = new PaymentFormViewModel();
@@ -73,6 +88,7 @@ namespace Lib_System.Controllers
         // POST: Payment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(PaymentFormViewModel vm)
         {
             if (!await _context.Borrowings.AnyAsync(b => b.BorrowingId == vm.BorrowingId))
@@ -103,6 +119,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Payment/Edit/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -128,6 +145,7 @@ namespace Lib_System.Controllers
         // POST: Payment/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, PaymentFormViewModel vm)
         {
             if (id != vm.PaymentId) return NotFound();
@@ -167,6 +185,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Payment/Delete/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -186,6 +205,7 @@ namespace Lib_System.Controllers
         // POST: Payment/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var payment = await _context.Payments.FindAsync(id);
@@ -214,6 +234,11 @@ namespace Lib_System.Controllers
                 }),
                 "BorrowingId", "Label", vm.BorrowingId);
         }
+
+        private int GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(value, out var userId) ? userId : 0;
+        }
     }
 }
-

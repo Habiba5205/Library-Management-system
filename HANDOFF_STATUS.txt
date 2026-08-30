@@ -149,6 +149,18 @@ dotnet build Lib_System.csproj
 Next step:
 Optional: add authentication/login and role-based access.
 
+Authentication/login status:
+- Cookie authentication is implemented.
+- Login and logout are implemented through AccountController.
+- Demo accounts are created automatically when the app starts if they do not exist:
+  - admin / Admin@123
+  - manager / Manager@123
+  - member / Member@123
+- Admin can view records but cannot create, edit, delete, borrow, return, or manage payments.
+- Manager can manage and control the system.
+- Member can view available books, borrow available books, return their own borrowed books,
+  and view their own borrowings/payments.
+
 Recommended order:
 1. Categories CRUD -- DONE
 2. Authors CRUD -- DONE

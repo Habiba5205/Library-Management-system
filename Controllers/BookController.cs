@@ -17,6 +17,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Book
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Index(string? searchString, int? categoryId, int? authorId)
         {
             var booksQuery = _context.Books
@@ -42,6 +43,11 @@ namespace Lib_System.Controllers
                 booksQuery = booksQuery.Where(b => b.BookAuthors.Any(ba => ba.AuthorId == authorId.Value));
             }
 
+            if (User.IsInRole("Member"))
+            {
+                booksQuery = booksQuery.Where(b => b.AvailabilityStatus == "Available");
+            }
+
             ViewBag.Categories = new SelectList(
                 await _context.Categories.OrderBy(c => c.Name).ToListAsync(), "CategoryId", "Name", categoryId);
             ViewBag.Authors = new SelectList(
@@ -52,6 +58,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Book/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -65,10 +72,16 @@ namespace Lib_System.Controllers
 
             if (book == null) return NotFound();
 
+            if (User.IsInRole("Member") && book.AvailabilityStatus != "Available")
+            {
+                return Forbid();
+            }
+
             return View(book);
         }
 
         // GET: Book/Create
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create()
         {
             var vm = new BookFormViewModel();
@@ -79,6 +92,7 @@ namespace Lib_System.Controllers
         // POST: Book/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(BookFormViewModel vm)
         {
             if (vm.SelectedAuthorIds == null || vm.SelectedAuthorIds.Count == 0)
@@ -119,6 +133,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Book/Edit/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -149,6 +164,7 @@ namespace Lib_System.Controllers
         // POST: Book/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, BookFormViewModel vm)
         {
             if (id != vm.BookId) return NotFound();
@@ -212,6 +228,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Book/Delete/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -229,6 +246,7 @@ namespace Lib_System.Controllers
         // POST: Book/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var book = await _context.Books

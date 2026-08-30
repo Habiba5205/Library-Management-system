@@ -6,9 +6,12 @@
 
 <h1>Categories</h1>
 
+@if (User.IsInRole("Manager"))
+{
 <p>
     <a asp-action="Create" class="btn btn-primary">+ Add New Category</a>
 </p>
+}
 
 @if (TempData["Message"] != null)
 {
@@ -31,8 +34,11 @@
             <td>@Html.DisplayFor(modelItem => item.Description)</td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.CategoryId" class="btn btn-sm btn-info">Details</a>
+                @if (User.IsInRole("Manager"))
+                {
                 <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-warning">Edit</a>
                 <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-danger">Delete</a>
+                }
             </td>
         </tr>
 }

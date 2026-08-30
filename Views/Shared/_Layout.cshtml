@@ -20,9 +20,13 @@
                 </button>
                 <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        {
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Category" asp-action="Index">Categories</a>
                         </li>
@@ -35,12 +39,36 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="User" asp-action="Index">Users</a>
                         </li>
+                        }
+                        @if (User.IsInRole("Member") || User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        {
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="Index">Borrowings</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Payment" asp-action="Index">Payments</a>
                         </li>
+                        }
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-muted">@User.Identity.Name (@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)</span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

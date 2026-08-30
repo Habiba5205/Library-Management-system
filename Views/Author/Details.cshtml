@@ -35,6 +35,9 @@ else
 }
 
 <div class="mt-3">
+    @if (User.IsInRole("Manager"))
+    {
     <a asp-action="Edit" asp-route-id="@Model.AuthorId" class="btn btn-warning">Edit</a>
+    }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

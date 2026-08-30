@@ -19,6 +19,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: User
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Index()
         {
             var users = await _context.Users
@@ -30,6 +31,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: User/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -48,6 +50,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: User/Create
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create()
         {
             var vm = new UserFormViewModel();
@@ -58,6 +61,7 @@ namespace Lib_System.Controllers
         // POST: User/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(UserFormViewModel vm)
         {
             if (string.IsNullOrWhiteSpace(vm.Password))
@@ -104,6 +108,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: User/Edit/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -131,6 +136,7 @@ namespace Lib_System.Controllers
         // POST: User/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, UserFormViewModel vm)
         {
             if (id != vm.UserId) return NotFound();
@@ -185,6 +191,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: User/Delete/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -203,6 +210,7 @@ namespace Lib_System.Controllers
         // POST: User/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var user = await _context.Users

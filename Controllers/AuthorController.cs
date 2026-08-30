@@ -15,12 +15,14 @@ namespace Lib_System.Controllers
         }
 
         // GET: Author
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Authors.ToListAsync());
         }
 
         // GET: Author/Details/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -36,6 +38,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Author/Create
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public IActionResult Create()
         {
             return View();
@@ -44,6 +47,7 @@ namespace Lib_System.Controllers
         // POST: Author/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create([Bind("AuthorId,Name,Biography")] Author author)
         {
             if (ModelState.IsValid)
@@ -56,6 +60,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Author/Edit/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -69,6 +74,7 @@ namespace Lib_System.Controllers
         // POST: Author/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, [Bind("AuthorId,Name,Biography")] Author author)
         {
             if (id != author.AuthorId) return NotFound();
@@ -91,6 +97,7 @@ namespace Lib_System.Controllers
         }
 
         // GET: Author/Delete/5
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -110,6 +117,7 @@ namespace Lib_System.Controllers
         // POST: Author/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var author = await _context.Authors.FindAsync(id);

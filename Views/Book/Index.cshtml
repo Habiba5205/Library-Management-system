@@ -6,9 +6,12 @@
 
 <h1>Books</h1>
 
+@if (User.IsInRole("Manager"))
+{
 <p>
     <a asp-action="Create" class="btn btn-primary">+ Add New Book</a>
 </p>
+}
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
@@ -59,8 +62,15 @@
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.BookId" class="btn btn-sm btn-info">Details</a>
+                @if (User.IsInRole("Member") && item.AvailabilityStatus == "Available")
+                {
+                    <a asp-controller="Borrowing" asp-action="Create" asp-route-bookId="@item.BookId" class="btn btn-sm btn-success">Borrow</a>
+                }
+                @if (User.IsInRole("Manager"))
+                {
                 <a asp-action="Edit" asp-route-id="@item.BookId" class="btn btn-sm btn-warning">Edit</a>
                 <a asp-action="Delete" asp-route-id="@item.BookId" class="btn btn-sm btn-danger">Delete</a>
+                }
             </td>
         </tr>
 }
