@@ -10,9 +10,9 @@ namespace Lib_System.ViewModels
         public int ActiveBorrowingCount { get; set; }
         public int OverdueBorrowingCount { get; set; }
         public int PaymentCount { get; set; }
+        public int UnpaidFineCount { get; set; }
         public decimal TotalPaidAmount { get; set; }
         public List<Borrowing> RecentBorrowings { get; set; } = new();
         public List<Payment> RecentPayments { get; set; } = new();
     }
 }
-

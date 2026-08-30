@@ -50,6 +50,9 @@
 
         <dt class="col-sm-3">Payments</dt>
         <dd class="col-sm-9">@Model.Payments.Count</dd>
+
+        <dt class="col-sm-3">Fines</dt>
+        <dd class="col-sm-9">@Model.Fines.Count</dd>
     </dl>
 </div>
 
@@ -57,6 +60,7 @@
     @if (User.IsInRole("Manager"))
     {
     <a asp-controller="Payment" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-primary">Add Payment</a>
+    <a asp-controller="Fine" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-outline-danger">Add Fine</a>
     }
     @if (Model.Status != "Returned" && (User.IsInRole("Manager") || User.IsInRole("Member")))
     {

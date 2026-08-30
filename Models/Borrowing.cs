@@ -28,5 +28,6 @@ public class Borrowing
     public User? User { get; set; }
 
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
-}
 
+    public ICollection<Fine> Fines { get; set; } = new List<Fine>();
+}

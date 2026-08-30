@@ -59,6 +59,7 @@ namespace Lib_System.Controllers
                     .ThenInclude(bookAuthor => bookAuthor.Author)
                 .Include(b => b.User)
                 .Include(b => b.Payments)
+                .Include(b => b.Fines)
                 .FirstOrDefaultAsync(b => b.BorrowingId == id);
 
             if (borrowing == null) return NotFound();

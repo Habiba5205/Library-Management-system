@@ -1,0 +1,71 @@
+@model IEnumerable<Lib_System.Models.Fine>
+
+@{
+    ViewData["Title"] = "Fines";
+}
+
+<h1>Fines</h1>
+
+@if (User.IsInRole("Manager"))
+{
+<p>
+    <a asp-action="Create" class="btn btn-primary">+ Add Fine</a>
+</p>
+}
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">-- All Statuses --</option>
+            <option value="Unpaid" selected="@(ViewBag.Status == "Unpaid")">Unpaid</option>
+            <option value="Paid" selected="@(ViewBag.Status == "Paid")">Paid</option>
+            <option value="Waived" selected="@(ViewBag.Status == "Waived")">Waived</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </div>
+</form>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Borrowing</th>
+            <th>Book</th>
+            <th>Member</th>
+            <th>Amount</th>
+            <th>Fine Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model)
+{
+        <tr>
+            <td>#@item.BorrowingId</td>
+            <td>@(item.Borrowing?.Book?.Title ?? "-")</td>
+            <td>@(item.Borrowing?.User?.Name ?? "-")</td>
+            <td>@item.Amount.ToString("C")</td>
+            <td>@item.FineDate.ToString("yyyy-MM-dd")</td>
+            <td>@item.Reason</td>
+            <td>
+                <span class="badge bg-@(item.Status == "Paid" ? "success" : item.Status == "Unpaid" ? "danger" : "secondary")">
+                    @item.Status
+                </span>
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.FineId" class="btn btn-sm btn-info">Details</a>
+                @if (User.IsInRole("Manager"))
+                {
+                <a asp-action="Edit" asp-route-id="@item.FineId" class="btn btn-sm btn-warning">Edit</a>
+                <a asp-action="Delete" asp-route-id="@item.FineId" class="btn btn-sm btn-danger">Delete</a>
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+

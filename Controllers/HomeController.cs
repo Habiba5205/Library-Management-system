@@ -24,11 +24,13 @@ public class HomeController : Controller
         var currentUserId = GetCurrentUserId();
         var borrowingsQuery = _context.Borrowings.AsQueryable();
         var paymentsQuery = _context.Payments.AsQueryable();
+        var finesQuery = _context.Fines.AsQueryable();
 
         if (isMember)
         {
             borrowingsQuery = borrowingsQuery.Where(b => b.UserId == currentUserId);
             paymentsQuery = paymentsQuery.Where(p => p.Borrowing != null && p.Borrowing.UserId == currentUserId);
+            finesQuery = finesQuery.Where(f => f.Borrowing != null && f.Borrowing.UserId == currentUserId);
         }
 
         var dashboard = new DashboardViewModel
@@ -39,6 +41,7 @@ public class HomeController : Controller
             ActiveBorrowingCount = await borrowingsQuery.CountAsync(b => b.Status == "Borrowed"),
             OverdueBorrowingCount = await borrowingsQuery.CountAsync(b => b.Status == "Borrowed" && b.DueDate < DateTime.Today),
             PaymentCount = await paymentsQuery.CountAsync(),
+            UnpaidFineCount = await finesQuery.CountAsync(f => f.Status == "Unpaid"),
             TotalPaidAmount = await paymentsQuery
                 .Where(p => p.Status == "Paid")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0,

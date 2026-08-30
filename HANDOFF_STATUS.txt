@@ -20,6 +20,7 @@ Finished work:
    - BookAuthor
    - Borrowing
    - Payment
+   - Fine
 4. Installed Entity Framework Core packages:
    - Microsoft.EntityFrameworkCore.SqlServer
    - Microsoft.EntityFrameworkCore.Tools
@@ -33,6 +34,7 @@ Finished work:
    - User to Borrowings
    - Book to Borrowings
    - Borrowing to Payments
+   - Borrowing to Fines
 8. Added unique indexes for:
    - RoleName
    - Email
@@ -41,6 +43,7 @@ Finished work:
 9. Added decimal precision for:
    - Book.Price
    - Payment.Amount
+   - Fine.Amount
 10. Added seed data for roles:
    - Admin
    - Manager
@@ -119,6 +122,12 @@ Finished work:
 53. Updated the app name in the layout from Lib_System to Library Management.
 54. Cleaned the main navbar and footer.
 55. Added basic dashboard/layout styling in wwwroot/css/site.css.
+56. Added Fine model, DbSet, EF relationship, and migration.
+57. Built FineController with full CRUD (Index, Details, Create, Edit, Delete).
+58. Added FineFormViewModel and Razor views under Views/Fine.
+59. Added "Fines" link to the navbar.
+60. Added an "Add Fine" shortcut from Borrowing Details.
+61. Dashboard now includes unpaid fine count.
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -138,6 +147,7 @@ Expected tables:
 - BookAuthors
 - Borrowings
 - Payments
+- Fines
 - __EFMigrationsHistory
 
 Useful commands for teammate after pulling:
@@ -159,7 +169,7 @@ Authentication/login status:
 - Admin can view records but cannot create, edit, delete, borrow, return, or manage payments.
 - Manager can manage and control the system.
 - Member can view available books, borrow available books, return their own borrowed books,
-  and view their own borrowings/payments.
+  and view their own borrowings/payments/fines.
 
 Recommended order:
 1. Categories CRUD -- DONE
@@ -170,16 +180,13 @@ Recommended order:
 6. Payments -- DONE
 7. Navbar and UI polish -- DONE
 8. Authentication/login -- OPTIONAL BONUS
+9. Fines -- DONE
 
 Important note:
 The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.
 
 Known gaps / things to watch:
-- No authentication/login exists yet. Password hashing is in place, but
-  there's no login page, session, or cookie auth wired up - a user's
-  password is stored securely but nothing checks it against anything yet.
-  This may be needed if the instructor requires login, per the original
-  spec's "optional bonus" auth requirement.
+- Authentication/login is implemented with cookies and role-based authorization.
 - Plain `dotnet build` may ask for a project/solution choice because the
   folder now contains both a project file and a solution file. Use
   `dotnet build Lib_System.csproj`.

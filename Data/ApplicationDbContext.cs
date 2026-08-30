@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<BookAuthor> BookAuthors => Set<BookAuthor>();
     public DbSet<Borrowing> Borrowings => Set<Borrowing>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Fine> Fines => Set<Fine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,6 +46,10 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<Payment>()
             .Property(payment => payment.Amount)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Fine>()
+            .Property(fine => fine.Amount)
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<BookAuthor>()
@@ -94,6 +99,12 @@ public class ApplicationDbContext : DbContext
             .HasOne(payment => payment.Borrowing)
             .WithMany(borrowing => borrowing.Payments)
             .HasForeignKey(payment => payment.BorrowingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Fine>()
+            .HasOne(fine => fine.Borrowing)
+            .WithMany(borrowing => borrowing.Fines)
+            .HasForeignKey(fine => fine.BorrowingId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Role>().HasData(
