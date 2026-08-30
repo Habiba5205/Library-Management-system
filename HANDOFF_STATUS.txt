@@ -4,7 +4,8 @@ Current stopping point:
 Full catalog, user management, and borrowing flow are complete: Categories,
 Authors, Books (with category/author selection, search, filtering), Users
 (with real password hashing), Borrowings (borrow/return/history), and Payments
-CRUD. Navbar and UI polish are next.
+CRUD. Dashboard and basic UI polish are complete. Optional authentication/login
+is the main remaining bonus feature.
 
 Finished work:
 1. Created an ASP.NET Core MVC project.
@@ -111,6 +112,13 @@ Finished work:
 48. Payment Create/Edit validates that the selected borrowing record exists.
 49. Added "Payments" link to the navbar.
 50. Added an "Add Payment" shortcut from Borrowing Details.
+51. Replaced the default ASP.NET home page with a dashboard.
+52. Dashboard shows book count, available books, member count, active
+    borrowings, overdue borrowings, payment count, total paid amount,
+    recent borrowings, and recent payments.
+53. Updated the app name in the layout from Lib_System to Library Management.
+54. Cleaned the main navbar and footer.
+55. Added basic dashboard/layout styling in wwwroot/css/site.css.
 
 Database location:
 Use SQL Server Object Explorer or SQL Server Management Studio.
@@ -139,7 +147,7 @@ dotnet tool run dotnet-ef database update
 dotnet build Lib_System.csproj
 
 Next step:
-Start navbar and UI polish.
+Optional: add authentication/login and role-based access.
 
 Recommended order:
 1. Categories CRUD -- DONE
@@ -148,7 +156,8 @@ Recommended order:
 4. Users or Members CRUD -- DONE
 5. Borrowing and return flow -- DONE
 6. Payments -- DONE
-7. Navbar and UI polish -- NEXT
+7. Navbar and UI polish -- DONE
+8. Authentication/login -- OPTIONAL BONUS
 
 Important note:
 The API specification was converted into an MVC project direction. We are not building API endpoints right now. The next work should use Controllers and Razor Views, not Web API controllers.

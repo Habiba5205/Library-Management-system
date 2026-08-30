@@ -1,8 +1,124 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model Lib_System.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="page-header">
+    <div>
+        <h1>Library Dashboard</h1>
+        <p class="text-muted mb-0">Track catalog activity, borrowings, returns, and payments.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Borrowing" asp-action="Create" class="btn btn-primary">Borrow Book</a>
+        <a asp-controller="Payment" asp-action="Create" class="btn btn-outline-primary">Add Payment</a>
+    </div>
 </div>
+
+<div class="dashboard-grid mb-4">
+    <div class="summary-card">
+        <span class="summary-label">Books</span>
+        <strong>@Model.BookCount</strong>
+        <small>@Model.AvailableBookCount available</small>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label">Members</span>
+        <strong>@Model.MemberCount</strong>
+        <small>registered members</small>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label">Active Borrowings</span>
+        <strong>@Model.ActiveBorrowingCount</strong>
+        <small>@Model.OverdueBorrowingCount overdue</small>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label">Payments</span>
+        <strong>@Model.PaymentCount</strong>
+        <small>@Model.TotalPaidAmount.ToString("C") paid</small>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Recent Borrowings</h2>
+                <a asp-controller="Borrowing" asp-action="Index">View all</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Member</th>
+                            <th>Due</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var borrowing in Model.RecentBorrowings)
+                    {
+                        <tr>
+                            <td>@(borrowing.Book?.Title ?? "-")</td>
+                            <td>@(borrowing.User?.Name ?? "-")</td>
+                            <td>@borrowing.DueDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <span class="badge bg-@(borrowing.Status == "Borrowed" ? "warning" : "success")">
+                                    @borrowing.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.RecentBorrowings.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted">No borrowings yet.</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Recent Payments</h2>
+                <a asp-controller="Payment" asp-action="Index">View all</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var payment in Model.RecentPayments)
+                    {
+                        <tr>
+                            <td>@(payment.Borrowing?.User?.Name ?? "-")</td>
+                            <td>@payment.Amount.ToString("C")</td>
+                            <td>
+                                <span class="badge bg-@(payment.Status == "Paid" ? "success" : "secondary")">
+                                    @payment.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.RecentPayments.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="text-muted">No payments yet.</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
