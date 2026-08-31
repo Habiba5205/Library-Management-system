@@ -1,0 +1,109 @@
+using Lib_System.Models;
+using Lib_System.Repositories.Interfaces;
+using Lib_System.Services.Interfaces;
+
+namespace Lib_System.Services
+{
+    public class BorrowingService : IBorrowingService
+    {
+        private readonly IBorrowingRepository _borrowingRepository;
+        private readonly IBookRepository _bookRepository;
+        private readonly IUserRepository _userRepository;
+
+        public BorrowingService(
+            IBorrowingRepository borrowingRepository,
+            IBookRepository bookRepository,
+            IUserRepository userRepository)
+        {
+            _borrowingRepository = borrowingRepository;
+            _bookRepository = bookRepository;
+            _userRepository = userRepository;
+        }
+
+        public Task<List<Borrowing>> GetBorrowingsAsync(int? restrictToUserId, string? status)
+        {
+            return _borrowingRepository.GetAllAsync(restrictToUserId, status);
+        }
+
+        public Task<Borrowing?> GetBorrowingDetailsAsync(int id) => _borrowingRepository.GetByIdAsync(id);
+
+        public Task<Borrowing?> GetReturnCandidateAsync(int id) => _borrowingRepository.GetForReturnAsync(id);
+
+        public async Task<ServiceResult> ValidateForCreateAsync(int bookId, int userId)
+        {
+            var result = new ServiceResult();
+
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null)
+            {
+                result.AddError("BookId", "Selected book was not found.");
+            }
+            else if (book.AvailabilityStatus != "Available")
+            {
+                result.AddError("BookId", "This book is not available for borrowing.");
+            }
+
+            if (!await _userRepository.IsMemberAsync(userId))
+            {
+                result.AddError("UserId", "Select a valid library member.");
+            }
+
+            return result;
+        }
+
+        public async Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays)
+        {
+            var book = await _bookRepository.GetByIdAsync(bookId);
+
+            var borrowing = new Borrowing
+            {
+                BookId = bookId,
+                UserId = userId,
+                BorrowDate = borrowDate,
+                DueDate = borrowDate.AddDays(loanDays),
+                Status = "Borrowed"
+            };
+
+            if (book != null)
+            {
+                book.AvailabilityStatus = "Borrowed";
+            }
+
+            await _borrowingRepository.AddAsync(borrowing);
+            await _borrowingRepository.SaveChangesAsync();
+        }
+
+        public async Task<ServiceResult> ReturnBorrowingAsync(int id)
+        {
+            var result = new ServiceResult();
+
+            var borrowing = await _borrowingRepository.GetForReturnAsync(id);
+            if (borrowing == null)
+            {
+                result.AddError("Borrowing not found.");
+                return result;
+            }
+
+            if (borrowing.Status == "Returned")
+            {
+                result.AddError("This book was already returned.");
+                return result;
+            }
+
+            borrowing.ReturnDate = DateTime.Today;
+            borrowing.Status = "Returned";
+
+            if (borrowing.Book != null)
+            {
+                borrowing.Book.AvailabilityStatus = "Available";
+            }
+
+            await _borrowingRepository.SaveChangesAsync();
+            return result;
+        }
+
+        public Task<List<Book>> GetAvailableBooksAsync() => _bookRepository.GetAvailableBooksAsync();
+
+        public Task<List<User>> GetMembersAsync(int? restrictToUserId) => _userRepository.GetMembersAsync(restrictToUserId);
+    }
+}

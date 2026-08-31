@@ -1,8 +1,14 @@
 using Lib_System.Data;
 using Lib_System.Models;
+using System.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Lib_System.Repositories;
+using Lib_System.Repositories.Interfaces;
+using Lib_System.Services;
+using Lib_System.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<IBorrowingRepository, BorrowingRepository>();
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IBorrowingService, BorrowingService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -18,6 +28,48 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+
+// Apply any pending EF Core migrations at startup so the database schema
+// matches the model (ensures tables such as Fines exist) and verify the
+// Fines table is present after migration.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    db.Database.Migrate();
+
+    var connection = db.Database.GetDbConnection();
+    try
+    {
+        if (connection.State == ConnectionState.Closed)
+            connection.Open();
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Fines'";
+        var result = cmd.ExecuteScalar();
+        var count = Convert.ToInt32(result ?? 0);
+
+        if (count == 0)
+        {
+            logger.LogError("After migration, the 'Fines' table was not found in the target database.");
+        }
+        else
+        {
+            logger.LogInformation("Verified: 'Fines' table exists in the target database.");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger2 = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger2.LogError(ex, "Error while verifying presence of 'Fines' table after migration.");
+    }
+    finally
+    {
+        if (connection.State == ConnectionState.Open)
+            connection.Close();
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

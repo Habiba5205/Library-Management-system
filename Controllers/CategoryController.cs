@@ -1,79 +1,70 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Lib_System.Models;
+using Lib_System.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Lib_System.Data;
-using Lib_System.Models;
 
 namespace Lib_System.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(ApplicationDbContext context)
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
-        // GET: Category
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.ToListAsync());
+            return View(await _categoryService.GetAllAsync());
         }
 
-        // GET: Category/Details/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
-            var category = await _context.Categories
-                .Include(c => c.Books)
-                .FirstOrDefaultAsync(c => c.CategoryId == id);
-
+            var category = await _categoryService.GetDetailsAsync(id.Value);
             if (category == null) return NotFound();
 
             return View(category);
         }
 
-        // GET: Category/Create
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Category/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create([Bind("CategoryId,Name,Description")] Category category)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(category);
-                await _context.SaveChangesAsync();
+                await _categoryService.CreateAsync(category);
                 return RedirectToAction(nameof(Index));
             }
             return View(category);
         }
 
-        // GET: Category/Edit/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryService.GetForEditAsync(id.Value);
             if (category == null) return NotFound();
 
             return View(category);
         }
 
-        // POST: Category/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, [Bind("CategoryId,Name,Description")] Category category)
         {
             if (id != category.CategoryId) return NotFound();
@@ -82,12 +73,11 @@ namespace Lib_System.Controllers
             {
                 try
                 {
-                    _context.Update(category);
-                    await _context.SaveChangesAsync();
+                    await _categoryService.UpdateAsync(id, category);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CategoryExists(category.CategoryId)) return NotFound();
+                    if (!await _categoryService.ExistsAsync(category.CategoryId)) return NotFound();
                     else throw;
                 }
                 return RedirectToAction(nameof(Index));
@@ -95,48 +85,36 @@ namespace Lib_System.Controllers
             return View(category);
         }
 
-        // GET: Category/Delete/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryId == id);
+            var category = await _categoryService.GetForDeleteAsync(id.Value);
             if (category == null) return NotFound();
 
             return View(category);
         }
 
-        // POST: Category/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryService.GetForDeleteAsync(id);
+            if (category == null) return RedirectToAction(nameof(Index));
 
-            if (category != null)
+            var result = await _categoryService.DeleteAsync(id);
+            if (!result.Success)
             {
-                // Prevent deleting a category that still has books assigned to it
-                bool hasBooks = await _context.Books.AnyAsync(b => b.CategoryId == id);
-                if (hasBooks)
+                foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty,
-                        "This category cannot be deleted because it still has books assigned to it. Reassign or delete those books first.");
-                    return View("Delete", category);
+                    ModelState.AddModelError(error.Field, error.Message);
                 }
-
-                _context.Categories.Remove(category);
-                await _context.SaveChangesAsync();
+                return View("Delete", category);
             }
 
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool CategoryExists(int id)
-        {
-            return _context.Categories.Any(e => e.CategoryId == id);
         }
     }
 }

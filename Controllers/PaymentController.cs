@@ -1,6 +1,6 @@
-using Lib_System.Data;
-using Lib_System.Models;
+using Lib_System.Services.Interfaces;
 using Lib_System.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,56 +10,29 @@ namespace Lib_System.Controllers
 {
     public class PaymentController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IPaymentService _paymentService;
 
-        public PaymentController(ApplicationDbContext context)
+        public PaymentController(IPaymentService paymentService)
         {
-            _context = context;
+            _paymentService = paymentService;
         }
 
-        // GET: Payment
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
+        [Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Index(string? status)
         {
-            var paymentsQuery = _context.Payments
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.Book)
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.User)
-                .AsQueryable();
-
-            if (User.IsInRole("Member"))
-            {
-                var currentUserId = GetCurrentUserId();
-                paymentsQuery = paymentsQuery.Where(p => p.Borrowing != null && p.Borrowing.UserId == currentUserId);
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                paymentsQuery = paymentsQuery.Where(p => p.Status == status);
-            }
+            int? restrictToUserId = User.IsInRole("Member") ? GetCurrentUserId() : null;
+            var payments = await _paymentService.GetAllAsync(restrictToUserId, status);
 
             ViewBag.Status = status;
-
-            return View(await paymentsQuery
-                .OrderByDescending(p => p.PaymentDate)
-                .ThenBy(p => p.Borrowing!.Book!.Title)
-                .ToListAsync());
+            return View(payments);
         }
 
-        // GET: Payment/Details/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager,Member")]
+        [Authorize(Roles = "Admin,Manager,Member")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
-            var payment = await _context.Payments
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.Book)
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.User)
-                .FirstOrDefaultAsync(p => p.PaymentId == id);
-
+            var payment = await _paymentService.GetDetailsAsync(id.Value);
             if (payment == null) return NotFound();
 
             if (User.IsInRole("Member") && payment.Borrowing?.UserId != GetCurrentUserId())
@@ -70,47 +43,30 @@ namespace Lib_System.Controllers
             return View(payment);
         }
 
-        // GET: Payment/Create
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(int? borrowingId)
         {
             var vm = new PaymentFormViewModel();
-
-            if (borrowingId.HasValue)
-            {
-                vm.BorrowingId = borrowingId.Value;
-            }
+            if (borrowingId.HasValue) vm.BorrowingId = borrowingId.Value;
 
             await PopulateBorrowingsAsync(vm);
             return View(vm);
         }
 
-        // POST: Payment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(PaymentFormViewModel vm)
         {
-            if (!await _context.Borrowings.AnyAsync(b => b.BorrowingId == vm.BorrowingId))
+            var validation = await _paymentService.ValidateBorrowingAsync(vm.BorrowingId);
+            foreach (var error in validation.Errors)
             {
-                ModelState.AddModelError(nameof(vm.BorrowingId), "Select a valid borrowing record.");
+                ModelState.AddModelError(error.Field, error.Message);
             }
 
             if (ModelState.IsValid)
             {
-                var payment = new Payment
-                {
-                    BorrowingId = vm.BorrowingId,
-                    Amount = vm.Amount,
-                    PaymentDate = vm.PaymentDate,
-                    PaymentMethod = vm.PaymentMethod,
-                    Status = vm.Status,
-                    TransactionReference = vm.TransactionReference
-                };
-
-                _context.Payments.Add(payment);
-                await _context.SaveChangesAsync();
-
+                await _paymentService.CreateAsync(vm);
                 return RedirectToAction(nameof(Index));
             }
 
@@ -118,13 +74,12 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
-        // GET: Payment/Edit/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            var payment = await _context.Payments.FindAsync(id);
+            var payment = await _paymentService.GetForEditAsync(id.Value);
             if (payment == null) return NotFound();
 
             var vm = new PaymentFormViewModel
@@ -142,41 +97,33 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
-        // POST: Payment/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int id, PaymentFormViewModel vm)
         {
             if (id != vm.PaymentId) return NotFound();
 
-            if (!await _context.Borrowings.AnyAsync(b => b.BorrowingId == vm.BorrowingId))
+            var validation = await _paymentService.ValidateBorrowingAsync(vm.BorrowingId);
+            foreach (var error in validation.Errors)
             {
-                ModelState.AddModelError(nameof(vm.BorrowingId), "Select a valid borrowing record.");
+                ModelState.AddModelError(error.Field, error.Message);
             }
 
             if (ModelState.IsValid)
             {
-                var payment = await _context.Payments.FindAsync(id);
-                if (payment == null) return NotFound();
-
-                payment.BorrowingId = vm.BorrowingId;
-                payment.Amount = vm.Amount;
-                payment.PaymentDate = vm.PaymentDate;
-                payment.PaymentMethod = vm.PaymentMethod;
-                payment.Status = vm.Status;
-                payment.TransactionReference = vm.TransactionReference;
-
+                bool updated;
                 try
                 {
-                    await _context.SaveChangesAsync();
+                    updated = await _paymentService.UpdateAsync(id, vm);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!await _context.Payments.AnyAsync(p => p.PaymentId == id)) return NotFound();
+                    if (!await _paymentService.ExistsAsync(id)) return NotFound();
                     else throw;
                 }
 
+                if (!updated) return NotFound();
                 return RedirectToAction(nameof(Index));
             }
 
@@ -184,47 +131,29 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
-        // GET: Payment/Delete/5
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var payment = await _context.Payments
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.Book)
-                .Include(p => p.Borrowing)
-                    .ThenInclude(b => b!.User)
-                .FirstOrDefaultAsync(p => p.PaymentId == id);
-
+            var payment = await _paymentService.GetForDeleteAsync(id.Value);
             if (payment == null) return NotFound();
 
             return View(payment);
         }
 
-        // POST: Payment/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var payment = await _context.Payments.FindAsync(id);
-            if (payment != null)
-            {
-                _context.Payments.Remove(payment);
-                await _context.SaveChangesAsync();
-            }
-
+            await _paymentService.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
         }
 
         private async Task PopulateBorrowingsAsync(PaymentFormViewModel vm)
         {
-            var borrowings = await _context.Borrowings
-                .Include(b => b.Book)
-                .Include(b => b.User)
-                .OrderByDescending(b => b.BorrowDate)
-                .ToListAsync();
+            var borrowings = await _paymentService.GetBorrowingsForDropdownAsync();
 
             vm.Borrowings = new SelectList(
                 borrowings.Select(b => new
