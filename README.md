@@ -2,7 +2,7 @@
 
 ASP.NET Core MVC web application for managing a library catalog, users, borrowing records, payments, fines, and role-based access.
 
-This project was built as an MVC application, not a Web API. The frontend uses Razor Views and Bootstrap, while the backend uses MVC controllers, Entity Framework Core, and SQL Server LocalDB.
+This project was built as an MVC application, not a Web API. The frontend uses Razor Views and Bootstrap, while the backend uses MVC controllers, services, repositories, Entity Framework Core, and SQL Server LocalDB.
 
 ## Features
 
@@ -14,7 +14,9 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 - Book filtering by category and author.
 - User management with hashed passwords.
 - Borrowing and return flow.
-- Payment management.
+- Automatic pending payment creation when a member borrows a book.
+- Early return request flow for members returning before the due date.
+- Payment management and updates.
 - Fine management for borrowing records.
 - Member sign up.
 - Cookie-based login and logout.
@@ -66,11 +68,22 @@ These accounts are created automatically when the app starts if they do not alre
 
 - ASP.NET Core MVC
 - C#
+- Service-Repository pattern
 - Entity Framework Core
 - SQL Server LocalDB
 - EF Core Migrations
 - ASP.NET Core Cookie Authentication
 - ASP.NET Core `PasswordHasher<User>`
+
+## Architecture
+
+The project follows the MVC pattern with a Service-Repository layer:
+
+- Controllers handle browser requests and return Razor Views.
+- Services contain business rules such as borrowing, returning, member sign up, payments, fines, and dashboard logic.
+- Repositories handle database queries using Entity Framework Core.
+- Models represent the database entities.
+- ViewModels shape data for forms and pages.
 
 ## Database
 
@@ -166,6 +179,8 @@ Controllers/
 Data/
 Migrations/
 Models/
+Repositories/
+Services/
 ViewModels/
 Views/
 wwwroot/
