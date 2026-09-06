@@ -32,6 +32,65 @@ namespace Lib_System.Controllers
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
 
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View(new RegisterViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel vm)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == vm.Email))
+            {
+                ModelState.AddModelError(nameof(vm.Email), "This email is already registered.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Username == vm.Username))
+            {
+                ModelState.AddModelError(nameof(vm.Username), "This username is already registered.");
+            }
+
+            var memberRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Member");
+            if (memberRole == null)
+            {
+                ModelState.AddModelError(string.Empty, "Member role was not found.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            var user = new User
+            {
+                Name = vm.Name,
+                Email = vm.Email,
+                Username = vm.Username,
+                Phone = vm.Phone,
+                Address = vm.Address,
+                RoleId = memberRole!.RoleId,
+                Status = "Active",
+                RegistrationDate = DateTime.Today,
+                CreatedDate = DateTime.Now
+            };
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, vm.Password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Registration successful. You can login now.";
+            return RedirectToAction(nameof(Login));
+        }
+
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -93,4 +152,3 @@ namespace Lib_System.Controllers
         }
     }
 }
-

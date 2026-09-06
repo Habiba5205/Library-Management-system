@@ -16,6 +16,7 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 - Borrowing and return flow.
 - Payment management.
 - Fine management for borrowing records.
+- Member sign up.
 - Cookie-based login and logout.
 - Role-based authorization.
 
@@ -25,6 +26,7 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 - Can view records.
 - Can review and manage users.
+- Can create staff credentials for Admin and Manager users.
 - Cannot borrow or return books.
 
 ### Manager
@@ -35,6 +37,7 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 ### Member
 
+- Can sign up from the login page.
 - Can view available books.
 - Can borrow available books.
 - Can return their own borrowed books.

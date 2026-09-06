@@ -9,6 +9,11 @@
         <div class="panel p-4">
             <h1 class="h3 mb-3">Login</h1>
 
+            @if (TempData["SuccessMessage"] is string successMessage)
+            {
+                <div class="alert alert-success">@successMessage</div>
+            }
+
             <form asp-action="Login" method="post">
                 <input type="hidden" asp-for="ReturnUrl" />
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -33,6 +38,10 @@
                 <button type="submit" class="btn btn-primary w-100">Login</button>
             </form>
 
+            <div class="mt-3 text-center">
+                <a asp-action="Register">Create member account</a>
+            </div>
+
             <div class="mt-4 text-muted small">
                 Demo accounts: admin / Admin@123, manager / Manager@123, member / Member@123
             </div>
@@ -43,4 +52,3 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-
