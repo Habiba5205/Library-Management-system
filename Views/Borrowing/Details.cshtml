@@ -43,7 +43,7 @@
 
         <dt class="col-sm-3">Status</dt>
         <dd class="col-sm-9">
-            <span class="badge bg-@(Model.Status == "Borrowed" ? "warning" : "success")">
+            <span class="badge bg-@(Model.Status == "Borrowed" ? "warning" : Model.Status == "Early Return Requested" ? "info" : "success")">
                 @Model.Status
             </span>
         </dd>
@@ -62,9 +62,16 @@
     <a asp-controller="Payment" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-primary">Add Payment</a>
     <a asp-controller="Fine" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-outline-danger">Add Fine</a>
     }
-    @if (Model.Status != "Returned" && (User.IsInRole("Manager") || User.IsInRole("Member")))
+    @if (Model.Status != "Returned" && User.IsInRole("Manager"))
     {
         <a asp-action="Return" asp-route-id="@Model.BorrowingId" class="btn btn-success">Return Book</a>
+    }
+    else if (Model.Status == "Borrowed" && User.IsInRole("Member"))
+    {
+        var isEarlyReturn = DateTime.Today < Model.DueDate.Date;
+        <a asp-action="Return" asp-route-id="@Model.BorrowingId" class="btn btn-success">
+            @(isEarlyReturn ? "Request Early Return" : "Return Book")
+        </a>
     }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

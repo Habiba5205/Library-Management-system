@@ -1,16 +1,23 @@
 @model Lib_System.Models.Borrowing
 
 @{
-    ViewData["Title"] = "Return Book";
+    var isEarlyReturnRequest = User.IsInRole("Member") && Model.Status == "Borrowed" && DateTime.Today < Model.DueDate.Date;
+    ViewData["Title"] = isEarlyReturnRequest ? "Request Early Return" : "Return Book";
 }
 
-<h1>Return Book</h1>
+<h1>@ViewData["Title"]</h1>
 
 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
 <div class="alert alert-info">
-    Confirm returning <strong>@Model.Book?.Title</strong> borrowed by
-    <strong>@Model.User?.Name</strong>.
+    @if (isEarlyReturnRequest)
+    {
+        <span>Confirm requesting manager approval to return <strong>@Model.Book?.Title</strong> before the due date.</span>
+    }
+    else
+    {
+        <span>Confirm returning <strong>@Model.Book?.Title</strong> borrowed by <strong>@Model.User?.Name</strong>.</span>
+    }
 </div>
 
 <dl class="row">
@@ -26,7 +33,6 @@
 
 <form asp-action="Return">
     <input type="hidden" asp-for="BorrowingId" />
-    <input type="submit" value="Confirm Return" class="btn btn-success" />
+    <input type="submit" value="@(isEarlyReturnRequest ? "Send Request" : "Confirm Return")" class="btn btn-success" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
-

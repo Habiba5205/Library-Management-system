@@ -106,7 +106,9 @@ namespace Lib_System.Controllers
                 return Forbid();
             }
 
-            var result = await _borrowingService.ReturnBorrowingAsync(id);
+            var result = User.IsInRole("Member") && DateTime.Today < borrowing.DueDate.Date
+                ? await _borrowingService.RequestEarlyReturnAsync(id)
+                : await _borrowingService.ReturnBorrowingAsync(id);
 
             if (!result.Success)
             {

@@ -38,7 +38,7 @@ public class HomeController : Controller
             BookCount = await _context.Books.CountAsync(b => !isMember || b.AvailabilityStatus == "Available"),
             AvailableBookCount = await _context.Books.CountAsync(b => b.AvailabilityStatus == "Available"),
             MemberCount = isMember ? 1 : await _context.Users.CountAsync(u => u.Role != null && u.Role.RoleName == "Member"),
-            ActiveBorrowingCount = await borrowingsQuery.CountAsync(b => b.Status == "Borrowed"),
+            ActiveBorrowingCount = await borrowingsQuery.CountAsync(b => b.Status != "Returned"),
             OverdueBorrowingCount = await borrowingsQuery.CountAsync(b => b.Status == "Borrowed" && b.DueDate < DateTime.Today),
             PaymentCount = await paymentsQuery.CountAsync(),
             UnpaidFineCount = await finesQuery.CountAsync(f => f.Status == "Unpaid"),

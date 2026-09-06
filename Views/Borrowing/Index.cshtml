@@ -18,6 +18,7 @@
         <select name="status" class="form-select">
             <option value="">-- All Statuses --</option>
             <option value="Borrowed" selected="@(ViewBag.Status == "Borrowed")">Borrowed</option>
+            <option value="Early Return Requested" selected="@(ViewBag.Status == "Early Return Requested")">Early Return Requested</option>
             <option value="Returned" selected="@(ViewBag.Status == "Returned")">Returned</option>
         </select>
     </div>
@@ -49,15 +50,22 @@
             <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
             <td>@(item.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
             <td>
-                <span class="badge bg-@(item.Status == "Borrowed" ? "warning" : "success")">
+                <span class="badge bg-@(item.Status == "Borrowed" ? "warning" : item.Status == "Early Return Requested" ? "info" : "success")">
                     @item.Status
                 </span>
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-info">Details</a>
-                @if (item.Status != "Returned" && (User.IsInRole("Manager") || User.IsInRole("Member")))
+                @if (item.Status != "Returned" && User.IsInRole("Manager"))
                 {
                     <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">Return</a>
+                }
+                else if (item.Status == "Borrowed" && User.IsInRole("Member"))
+                {
+                    var isEarlyReturn = DateTime.Today < item.DueDate.Date;
+                    <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">
+                        @(isEarlyReturn ? "Request Early Return" : "Return")
+                    </a>
                 }
             </td>
         </tr>

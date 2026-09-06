@@ -12,6 +12,7 @@ namespace Lib_System.Services.Interfaces
         Task<ServiceResult> ValidateForCreateAsync(int bookId, int userId);
         Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays);
 
+        Task<ServiceResult> RequestEarlyReturnAsync(int id);
         Task<ServiceResult> ReturnBorrowingAsync(int id);
 
         Task<List<Book>> GetAvailableBooksAsync();

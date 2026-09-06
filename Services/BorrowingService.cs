@@ -113,6 +113,41 @@ namespace Lib_System.Services
             return result;
         }
 
+        public async Task<ServiceResult> RequestEarlyReturnAsync(int id)
+        {
+            var result = new ServiceResult();
+
+            var borrowing = await _borrowingRepository.GetForReturnAsync(id);
+            if (borrowing == null)
+            {
+                result.AddError("Borrowing not found.");
+                return result;
+            }
+
+            if (borrowing.Status == "Returned")
+            {
+                result.AddError("This book was already returned.");
+                return result;
+            }
+
+            if (borrowing.Status == "Early Return Requested")
+            {
+                result.AddError("Early return was already requested.");
+                return result;
+            }
+
+            if (DateTime.Today >= borrowing.DueDate.Date)
+            {
+                result.AddError("This borrowing is not before the due date anymore.");
+                return result;
+            }
+
+            borrowing.Status = "Early Return Requested";
+
+            await _borrowingRepository.SaveChangesAsync();
+            return result;
+        }
+
         public Task<List<Book>> GetAvailableBooksAsync() => _bookRepository.GetAvailableBooksAsync();
 
         public Task<List<User>> GetMembersAsync(int? restrictToUserId) => _userRepository.GetMembersAsync(restrictToUserId);

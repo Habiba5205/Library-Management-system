@@ -150,8 +150,8 @@ dotnet build Lib_System.csproj
 6. Login as Member.
 7. Borrow an available book.
 8. Confirm a pending payment appears for the borrowing.
-9. Return the borrowed book.
-10. Login as Manager.
+9. If the member returns before the due date, send an early return request.
+10. Login as Manager and process the requested return.
 11. Add a fine to a borrowing record.
 12. Update the borrowing payment if needed.
 13. Login as Admin and confirm records are view-only.
