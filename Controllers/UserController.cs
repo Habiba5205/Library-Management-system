@@ -16,13 +16,13 @@ namespace Lib_System.Controllers
             _userService = userService;
         }
 
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             return View(await _userService.GetAllAsync());
         }
 
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -34,7 +34,7 @@ namespace Lib_System.Controllers
             return View(user);
         }
 
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create()
         {
             var vm = new UserFormViewModel();
@@ -44,7 +44,7 @@ namespace Lib_System.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(UserFormViewModel vm)
         {
             var validation = await _userService.ValidateForCreateAsync(vm);
@@ -63,7 +63,7 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -90,7 +90,7 @@ namespace Lib_System.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, UserFormViewModel vm)
         {
             if (id != vm.UserId) return NotFound();
@@ -122,7 +122,7 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -135,7 +135,7 @@ namespace Lib_System.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var user = await _userService.GetForDeleteAsync(id);

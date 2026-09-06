@@ -24,12 +24,14 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 ### Admin
 
 - Can view records.
-- Cannot create, edit, delete, borrow, return, or manage payments/fines.
+- Can review and manage users.
+- Cannot borrow or return books.
 
 ### Manager
 
 - Can manage and control the system.
-- Can create, edit, delete, and view categories, authors, books, users, borrowings, payments, and fines.
+- Can create, edit, delete, and view categories, authors, books, borrowings, payments, and fines.
+- Cannot review or manage users.
 
 ### Member
 
@@ -143,7 +145,7 @@ dotnet build Lib_System.csproj
 1. Login as Manager.
 2. Create a category.
 3. Create an author.
-4. Create a member user.
+4. Login as Admin and create a member user.
 5. Create a book and assign category/author.
 6. Login as Member.
 7. Borrow an available book.
