@@ -18,5 +18,10 @@ namespace Lib_System.Repositories
         {
             return await _context.Roles.OrderBy(r => r.RoleName).ToListAsync();
         }
+
+        public async Task<Role?> GetByNameAsync(string roleName)
+        {
+            return await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == roleName);
+        }
     }
 }

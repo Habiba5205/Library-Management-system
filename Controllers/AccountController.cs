@@ -1,24 +1,21 @@
 using System.Security.Claims;
-using Lib_System.Data;
 using Lib_System.Models;
+using Lib_System.Services.Interfaces;
 using Lib_System.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Lib_System.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly PasswordHasher<User> _passwordHasher = new();
+        private readonly IAccountService _accountService;
 
-        public AccountController(ApplicationDbContext context)
+        public AccountController(IAccountService accountService)
         {
-            _context = context;
+            _accountService = accountService;
         }
 
         [AllowAnonymous]
@@ -48,47 +45,22 @@ namespace Lib_System.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel vm)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == vm.Email))
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError(nameof(vm.Email), "This email is already registered.");
+                var result = await _accountService.RegisterMemberAsync(vm);
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(error.Field, error.Message);
+                }
+
+                if (ModelState.IsValid)
+                {
+                    TempData["SuccessMessage"] = "Registration successful. You can login now.";
+                    return RedirectToAction(nameof(Login));
+                }
             }
 
-            if (await _context.Users.AnyAsync(u => u.Username == vm.Username))
-            {
-                ModelState.AddModelError(nameof(vm.Username), "This username is already registered.");
-            }
-
-            var memberRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Member");
-            if (memberRole == null)
-            {
-                ModelState.AddModelError(string.Empty, "Member role was not found.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return View(vm);
-            }
-
-            var user = new User
-            {
-                Name = vm.Name,
-                Email = vm.Email,
-                Username = vm.Username,
-                Phone = vm.Phone,
-                Address = vm.Address,
-                RoleId = memberRole!.RoleId,
-                Status = "Active",
-                RegistrationDate = DateTime.Today,
-                CreatedDate = DateTime.Now
-            };
-
-            user.PasswordHash = _passwordHasher.HashPassword(user, vm.Password);
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Registration successful. You can login now.";
-            return RedirectToAction(nameof(Login));
+            return View(vm);
         }
 
         [HttpPost]
@@ -101,19 +73,18 @@ namespace Lib_System.Controllers
                 return View(vm);
             }
 
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.Status == "Active" &&
-                    (u.Username == vm.UsernameOrEmail || u.Email == vm.UsernameOrEmail));
-
-            if (user == null ||
-                _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, vm.Password) == PasswordVerificationResult.Failed)
+            var loginResult = await _accountService.LoginAsync(vm);
+            foreach (var error in loginResult.Errors)
             {
-                ModelState.AddModelError(string.Empty, "Invalid username/email or password.");
+                ModelState.AddModelError(error.Field, error.Message);
+            }
+
+            if (!ModelState.IsValid || loginResult.User == null)
+            {
                 return View(vm);
             }
 
+            var user = loginResult.User;
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()),

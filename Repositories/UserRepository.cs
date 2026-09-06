@@ -46,6 +46,15 @@ namespace Lib_System.Repositories
                 .FirstOrDefaultAsync(u => u.UserId == id);
         }
 
+        public async Task<User?> GetActiveByUsernameOrEmailAsync(string usernameOrEmail)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u =>
+                    u.Status == "Active" &&
+                    (u.Username == usernameOrEmail || u.Email == usernameOrEmail));
+        }
+
         public async Task<bool> IsMemberAsync(int userId)
         {
             return await _context.Users

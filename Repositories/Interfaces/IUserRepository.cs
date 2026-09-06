@@ -9,6 +9,7 @@ namespace Lib_System.Repositories.Interfaces
         Task<User?> GetByIdAsync(int id); // simple
         Task<User?> GetByIdWithDetailsAsync(int id);   // Role, ManagedBooks, Borrowings.Book (Details)
         Task<User?> GetByIdWithRelationsAsync(int id); // Role, Borrowings, ManagedBooks (Delete)
+        Task<User?> GetActiveByUsernameOrEmailAsync(string usernameOrEmail);
 
         Task<bool> IsMemberAsync(int userId);
         Task<List<User>> GetMembersAsync(int? restrictToUserId);
