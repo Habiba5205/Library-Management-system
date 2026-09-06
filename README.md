@@ -149,11 +149,12 @@ dotnet build Lib_System.csproj
 5. Create a book and assign category/author.
 6. Login as Member.
 7. Borrow an available book.
-8. Return the borrowed book.
-9. Login as Manager.
-10. Add a fine to a borrowing record.
-11. Add a payment to a borrowing record.
-12. Login as Admin and confirm records are view-only.
+8. Confirm a pending payment appears for the borrowing.
+9. Return the borrowed book.
+10. Login as Manager.
+11. Add a fine to a borrowing record.
+12. Update the borrowing payment if needed.
+13. Login as Admin and confirm records are view-only.
 
 ## Project Structure
 

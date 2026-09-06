@@ -9,15 +9,18 @@ namespace Lib_System.Services
         private readonly IBorrowingRepository _borrowingRepository;
         private readonly IBookRepository _bookRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IPaymentRepository _paymentRepository;
 
         public BorrowingService(
             IBorrowingRepository borrowingRepository,
             IBookRepository bookRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IPaymentRepository paymentRepository)
         {
             _borrowingRepository = borrowingRepository;
             _bookRepository = bookRepository;
             _userRepository = userRepository;
+            _paymentRepository = paymentRepository;
         }
 
         public Task<List<Borrowing>> GetBorrowingsAsync(int? restrictToUserId, string? status)
@@ -70,6 +73,14 @@ namespace Lib_System.Services
             }
 
             await _borrowingRepository.AddAsync(borrowing);
+            await _paymentRepository.AddAsync(new Payment
+            {
+                Borrowing = borrowing,
+                Amount = book?.Price ?? 0,
+                PaymentDate = borrowDate,
+                PaymentMethod = "Not selected",
+                Status = "Pending"
+            });
             await _borrowingRepository.SaveChangesAsync();
         }
 
