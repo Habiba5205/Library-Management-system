@@ -57,7 +57,7 @@ namespace Lib_System.Services
                 Title = vm.Title,
                 PublicationYear = vm.PublicationYear,
                 Price = vm.Price,
-                AvailabilityStatus = vm.AvailabilityStatus,
+                AvailabilityStatus = "Available",
                 CategoryId = vm.CategoryId,
                 ManagerId = vm.ManagerId
             };
