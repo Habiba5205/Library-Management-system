@@ -102,6 +102,45 @@ try
     {
         Console.WriteLine("PASS: Active reservation blocks manual availability change with an error");
     }
+    var authorService = new AuthorService(new AuthorRepository(db));
+    var emptyAuthor = new Author { Name = "Unlinked author" };
+    await authorService.CreateAsync(emptyAuthor);
+    Check((await authorService.DeleteAsync(emptyAuthor.AuthorId)).Success &&
+        !await db.Authors.AnyAsync(a => a.AuthorId == emptyAuthor.AuthorId), "Author without books can be deleted");
+    var linkedAuthor = new Author { Name = "Linked author" };
+    await authorService.CreateAsync(linkedAuthor);
+    db.BookAuthors.Add(new BookAuthor { AuthorId = linkedAuthor.AuthorId, BookId = editableId });
+    await db.SaveChangesAsync();
+    Check(!(await authorService.DeleteAsync(linkedAuthor.AuthorId)).Success &&
+        await db.BookAuthors.AnyAsync(ba => ba.AuthorId == linkedAuthor.AuthorId) &&
+        await db.Books.AnyAsync(b => b.BookId == editableId), "Linked author deletion is blocked and book links remain");
+    var categoryService = new CategoryService(new CategoryRepository(db), new BookRepository(db));
+    var emptyCategory = new Category { Name = "Empty category" };
+    await categoryService.CreateAsync(emptyCategory);
+    Check((await categoryService.DeleteAsync(emptyCategory.CategoryId)).Success &&
+        !await db.Categories.AnyAsync(c => c.CategoryId == emptyCategory.CategoryId), "Empty category can be deleted");
+    Check(!(await categoryService.DeleteAsync(category.CategoryId)).Success &&
+        await db.Categories.AnyAsync(c => c.CategoryId == category.CategoryId), "Category with books cannot be deleted");
+    var protectedBookId = await Book();
+    foreach (var status in new[] { "Reserved", "Borrowed" })
+    {
+        await bookService.UpdateAsync(protectedBookId, await EditModel(protectedBookId, status));
+        Check(!(await bookService.DeleteAsync(protectedBookId)).Success &&
+            await db.Books.AnyAsync(b => b.BookId == protectedBookId), status + " book without history cannot be deleted");
+    }
+    await bookService.UpdateAsync(protectedBookId, await EditModel(protectedBookId, "Available"));
+    Check((await bookService.DeleteAsync(protectedBookId)).Success &&
+        !await db.Books.AnyAsync(b => b.BookId == protectedBookId), "Available book without history can be deleted");
+    var historicalBookId = (await Read(expired)).Borrowing!.BookId;
+    Check(!(await bookService.DeleteAsync(historicalBookId)).Success, "Available book with borrowing history cannot be deleted");
+    var dashboardRepository = new DashboardRepository(db);
+    var memberDashboard = await dashboardRepository.GetDashboardAsync(true, member.UserId);
+    var staffDashboard = await dashboardRepository.GetDashboardAsync(false, member.UserId);
+    Check(memberDashboard.BookCount == staffDashboard.BookCount &&
+        memberDashboard.BookCount > memberDashboard.AvailableBookCount,
+        "Member total includes reserved and borrowed books");
+    Check(memberDashboard.AvailableBookCount == staffDashboard.AvailableBookCount,
+        "Members and staff see the same available book count");
 }
 finally
 {

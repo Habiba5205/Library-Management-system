@@ -101,7 +101,15 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _authorService.DeleteAsync(id);
+            var author = await _authorService.GetForDeleteAsync(id);
+            if (author == null) return RedirectToAction(nameof(Index));
+            var result = await _authorService.DeleteAsync(id);
+            if (!result.Success)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(error.Field, error.Message);
+                return View("Delete", author);
+            }
             return RedirectToAction(nameof(Index));
         }
     }

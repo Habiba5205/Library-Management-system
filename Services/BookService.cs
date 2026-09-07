@@ -148,6 +148,12 @@ namespace Lib_System.Services
             var book = await _bookRepository.GetByIdWithBorrowingsAsync(id);
             if (book == null) return result;
 
+            if (book.AvailabilityStatus is "Borrowed" or "Reserved")
+            {
+                result.AddError("This book cannot be deleted while its availability status is Borrowed or Reserved.");
+                return result;
+            }
+
             if (book.Borrowings.Any())
             {
                 result.AddError(

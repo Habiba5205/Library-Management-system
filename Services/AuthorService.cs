@@ -35,16 +35,21 @@ namespace Lib_System.Services
 
         public Task<bool> ExistsAsync(int id) => _authorRepository.ExistsAsync(id);
 
-        public async Task DeleteAsync(int id)
+        public async Task<ServiceResult> DeleteAsync(int id)
         {
-            // No block here, matching the original: BookAuthor -> Author cascades
-            // on delete, so this only removes the link rows, not the books.
-            var author = await _authorRepository.GetByIdAsync(id);
+            var result = new ServiceResult();
+            var author = await _authorRepository.GetByIdWithBooksAsync(id);
+            if (author != null && author.BookAuthors.Any())
+            {
+                result.AddError("This author cannot be deleted because books are linked to them. Reassign or remove those book links first.");
+                return result;
+            }
             if (author != null)
             {
                 await _authorRepository.RemoveAsync(author);
                 await _authorRepository.SaveChangesAsync();
             }
+            return result;
         }
     }
 }

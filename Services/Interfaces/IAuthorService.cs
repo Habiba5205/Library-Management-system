@@ -11,6 +11,6 @@ namespace Lib_System.Services.Interfaces
         Task CreateAsync(Author author);
         Task UpdateAsync(int id, Author author);
         Task<bool> ExistsAsync(int id);
-        Task DeleteAsync(int id);
+        Task<ServiceResult> DeleteAsync(int id);
     }
 }

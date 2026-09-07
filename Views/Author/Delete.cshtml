@@ -5,6 +5,7 @@
 }
 
 <h1>Delete Author</h1>
+<div asp-validation-summary="All" class="text-danger"></div>
 
 <h3 class="text-danger">Are you sure you want to delete this author?</h3>
 
@@ -21,11 +22,9 @@
 @if (Model.BookAuthors != null && Model.BookAuthors.Any())
 {
     <div class="alert alert-warning">
-        <strong>Heads up:</strong> this author is linked to the following book(s).
-        Deleting the author will remove the author-book link, but the book(s) will stay
-        in the catalog.
+        This author cannot be deleted while linked to the following books.
         <ul class="mb-0 mt-2">
-            @foreach (var bookAuthor in Model.BookAuthors)
+            @foreach (var bookAuthor in Model.BookAuthors.OrderByDescending(ba => ba.BookId))
             {
                 <li>@bookAuthor.Book?.Title</li>
             }
@@ -35,6 +34,6 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="AuthorId" />
-    <input type="submit" value="Delete" class="btn btn-danger" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@(Model.BookAuthors?.Any() == true ? "disabled" : null)" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>

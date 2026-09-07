@@ -16,7 +16,7 @@
         }
         @if (User.IsInRole("Manager"))
         {
-            <a asp-controller="Payment" asp-action="Create" class="btn btn-outline-primary">Add Payment</a>
+            <a asp-controller="Book" asp-action="Create" class="btn btn-outline-primary">Add Book</a>
         }
     </div>
 </div>
@@ -38,7 +38,7 @@
         <small>@Model.OverdueBorrowingCount overdue</small>
     </div>
     <div class="summary-card">
-        <span class="summary-label">Payments</span>
+        <span class="summary-label">Transactions</span>
         <strong>@Model.PaymentCount</strong>
         <small>@Model.TotalPaidAmount.ToString("C") paid, @Model.UnpaidFineCount unpaid fine(s)</small>
     </div>

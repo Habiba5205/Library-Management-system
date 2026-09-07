@@ -33,11 +33,12 @@
 
 @{
     bool hasBorrowings = Model.Borrowings != null && Model.Borrowings.Any();
+    bool protectedStatus = Model.AvailabilityStatus is "Borrowed" or "Reserved";
 }
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="BookId" />
-    <input type="submit" value="Delete" class="btn btn-danger" disabled="@(hasBorrowings ? "disabled" : null)" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@(hasBorrowings || protectedStatus ? "disabled" : null)" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
@@ -46,4 +47,8 @@
     <p class="text-muted mt-2">
         <em>Delete is disabled because this book has borrowing history.</em>
     </p>
+}
+@if (protectedStatus)
+{
+    <p class="text-danger mt-2">This book cannot be deleted while its status is Borrowed or Reserved.</p>
 }
