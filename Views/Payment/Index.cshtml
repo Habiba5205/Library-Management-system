@@ -52,10 +52,9 @@
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-info">Details</a>
-                @if (User.IsInRole("Manager"))
+                @if (User.IsInRole("Manager") && item.PaymentMethod == "Cash" && item.Status == "Pending" && item.Borrowing?.Status == "Reserved")
                 {
-                <a asp-action="Edit" asp-route-id="@item.PaymentId" class="btn btn-sm btn-warning">Edit</a>
-                <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-sm btn-danger">Delete</a>
+                    <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-warning">Review Cash Payment</a>
                 }
             </td>
         </tr>

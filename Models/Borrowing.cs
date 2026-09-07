@@ -10,6 +10,10 @@ public class Borrowing
 
     public int UserId { get; set; }
 
+    public DateTime? ReservationExpiresAtUtc { get; set; }
+
+    public int LoanDays { get; set; } = 14;
+
     [DataType(DataType.Date)]
     public DateTime BorrowDate { get; set; } = DateTime.Today;
 

@@ -1,4 +1,5 @@
 using Lib_System.Models;
+using Lib_System.Repositories;
 using Lib_System.Repositories.Interfaces;
 using Lib_System.Services.Interfaces;
 
@@ -10,17 +11,19 @@ namespace Lib_System.Services
         private readonly IBookRepository _bookRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPaymentRepository _paymentRepository;
+        private readonly PaymentWorkflowRepository _workflow;
 
         public BorrowingService(
             IBorrowingRepository borrowingRepository,
             IBookRepository bookRepository,
             IUserRepository userRepository,
-            IPaymentRepository paymentRepository)
+            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow)
         {
             _borrowingRepository = borrowingRepository;
             _bookRepository = bookRepository;
             _userRepository = userRepository;
             _paymentRepository = paymentRepository;
+            _workflow = workflow;
         }
 
         public Task<List<Borrowing>> GetBorrowingsAsync(int? restrictToUserId, string? status)
@@ -54,39 +57,9 @@ namespace Lib_System.Services
             return result;
         }
 
-        public async Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod)
+        public Task<int?> CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod)
         {
-            if (paymentMethod is not ("Cash" or "Card" or "Bank Transfer" or "Mobile Wallet"))
-            {
-                throw new ArgumentException("Select a valid payment method.", nameof(paymentMethod));
-            }
-
-            var book = await _bookRepository.GetByIdAsync(bookId);
-
-            var borrowing = new Borrowing
-            {
-                BookId = bookId,
-                UserId = userId,
-                BorrowDate = borrowDate,
-                DueDate = borrowDate.AddDays(loanDays),
-                Status = "Borrowed"
-            };
-
-            if (book != null)
-            {
-                book.AvailabilityStatus = "Borrowed";
-            }
-
-            await _borrowingRepository.AddAsync(borrowing);
-            await _paymentRepository.AddAsync(new Payment
-            {
-                Borrowing = borrowing,
-                Amount = book?.Price ?? 0,
-                PaymentDate = borrowDate,
-                PaymentMethod = paymentMethod,
-                Status = "Pending"
-            });
-            await _borrowingRepository.SaveChangesAsync();
+            return _workflow.ReserveAsync(bookId, userId, loanDays, paymentMethod);
         }
 
         public async Task<ServiceResult> ReturnBorrowingAsync(int id)
@@ -100,9 +73,9 @@ namespace Lib_System.Services
                 return result;
             }
 
-            if (borrowing.Status == "Returned")
+            if (borrowing.Status is not ("Borrowed" or "Early Return Requested"))
             {
-                result.AddError("This book was already returned.");
+                result.AddError("Only an active borrowing can be returned.");
                 return result;
             }
 
@@ -129,9 +102,9 @@ namespace Lib_System.Services
                 return result;
             }
 
-            if (borrowing.Status == "Returned")
+            if (borrowing.Status is not ("Borrowed" or "Early Return Requested"))
             {
-                result.AddError("This book was already returned.");
+                result.AddError("Only an active borrowing can be returned.");
                 return result;
             }
 

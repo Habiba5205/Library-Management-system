@@ -18,6 +18,8 @@
         <select name="status" class="form-select">
             <option value="">-- All Statuses --</option>
             <option value="Borrowed" selected="@(ViewBag.Status == "Borrowed")">Borrowed</option>
+            <option value="Reserved" selected="@(ViewBag.Status == "Reserved")">Reserved</option>
+            <option value="Failed" selected="@(ViewBag.Status == "Failed")">Failed</option>
             <option value="Early Return Requested" selected="@(ViewBag.Status == "Early Return Requested")">Early Return Requested</option>
             <option value="Returned" selected="@(ViewBag.Status == "Returned")">Returned</option>
         </select>
@@ -46,8 +48,8 @@
             <tr>
                 <td>@(item.Book?.Title ?? "-")</td>
                 <td>@(item.User?.Name ?? "-")</td>
-                <td>@item.BorrowDate.ToString("yyyy-MM-dd")</td>
-                <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
+                <td>@(item.Status is "Reserved" or "Failed" ? "-" : item.BorrowDate.ToString("yyyy-MM-dd"))</td>
+                <td>@(item.Status is "Reserved" or "Failed" ? "-" : item.DueDate.ToString("yyyy-MM-dd"))</td>
                 <td>@(item.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                 <td>
                     <span class="badge bg-@(item.Status == "Borrowed" ? "warning" : item.Status == "Early Return Requested" ? "info" : "success")">
@@ -56,7 +58,7 @@
                 </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-info">Details</a>
-                    @if (item.Status != "Returned" && User.IsInRole("Manager"))
+                    @if ((item.Status is "Borrowed" or "Early Return Requested") && User.IsInRole("Manager"))
                     {
                         <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">Return</a>
                     }

@@ -22,7 +22,7 @@ namespace Lib_System.ViewModels
         public int LoanDays { get; set; } = 14;
 
         [Required]
-        [AllowedValues("Cash", "Card", "Bank Transfer", "Mobile Wallet", ErrorMessage = "Select a valid payment method.")]
+        [AllowedValues("Cash", "Card", ErrorMessage = "Select Cash or Card.")]
         [Display(Name = "Payment Method")]
         public string PaymentMethod { get; set; } = string.Empty;
 

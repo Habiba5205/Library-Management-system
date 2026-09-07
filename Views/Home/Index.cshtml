@@ -67,7 +67,7 @@
                             <tr>
                                 <td>@(borrowing.Book?.Title ?? "-")</td>
                                 <td>@(borrowing.User?.Name ?? "-")</td>
-                                <td>@borrowing.DueDate.ToString("yyyy-MM-dd")</td>
+                                <td>@(borrowing.Status is "Reserved" or "Failed" ? "-" : borrowing.DueDate.ToString("yyyy-MM-dd"))</td>
                                 <td>
                                     <span class="badge bg-@(borrowing.Status == "Borrowed" ? "warning" : "success")">
                                         @borrowing.Status

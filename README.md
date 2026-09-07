@@ -6,6 +6,28 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 ## Features
 
+### Payment Flow
+
+- Members choose Cash or Card when reserving a book.
+- Cash holds the book for 48 hours. The manager confirms receipt of cash from
+  Payment Details. This marks the payment Paid and starts the loan on that day.
+- Unpaid cash reservations expire as Failed, releasing the book.
+- Card opens a Development-only demo checkout. Success starts the borrowing
+  automatically; failure or cancellation releases the book. Managers cannot
+  confirm, edit, or delete card payments.
+- Demo checkout never collects card details or charges money. A real provider
+  integration is still required before enabling card payment outside Development.
+- Abandoned demo card checkouts expire after 30 minutes.
+- Expiry runs every minute while the app is running and before page requests.
+  After downtime, overdue reservations expire on startup or the next request.
+- Existing borrowing history is preserved; these rules apply to new reservations.
+
+Payment integration checks use an isolated temporary LocalDB database:
+
+```powershell
+dotnet run --project Tests/PaymentFlow/PaymentFlow.csproj --configuration PaymentTests
+```
+
 - Dashboard with library statistics.
 - Category management.
 - Author management.
@@ -33,8 +55,9 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 ### Manager
 
-- Can manage and control the system.
-- Can create, edit, delete, and view categories, authors, books, borrowings, payments, and fines.
+- Can manage the catalog, borrowings, and fines.
+- Can view payments and confirm pending cash payments before reservation expiry.
+- Cannot manually alter card payments.
 - Cannot review or manage users.
 
 ### Member

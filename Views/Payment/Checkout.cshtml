@@ -1,0 +1,18 @@
+@model Lib_System.Models.Payment
+@{
+    ViewData["Title"] = "Demo Card Checkout";
+}
+<h1>Demo Card Checkout</h1>
+<p class="alert alert-warning">Test payment only. No money is charged. Do not enter real card details.</p>
+<dl class="row">
+    <dt class="col-sm-3">Book</dt>
+    <dd class="col-sm-9">@Model.Borrowing?.Book?.Title</dd>
+    <dt class="col-sm-3">Amount</dt>
+    <dd class="col-sm-9">@Model.Amount.ToString("C")</dd>
+</dl>
+<form asp-action="DemoResult" method="post" class="d-flex flex-wrap gap-2">
+    <input type="hidden" name="id" value="@Model.PaymentId" />
+    <button name="outcome" value="success" class="btn btn-success">Simulate Successful Payment</button>
+    <button name="outcome" value="failure" class="btn btn-danger">Simulate Failed Payment</button>
+    <button name="outcome" value="cancel" class="btn btn-secondary">Cancel Payment</button>
+</form>

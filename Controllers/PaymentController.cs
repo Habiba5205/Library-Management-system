@@ -1,150 +1,64 @@
 using Lib_System.Services.Interfaces;
-using Lib_System.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace Lib_System.Controllers
+namespace Lib_System.Controllers;
+
+[Authorize(Roles = "Admin,Manager,Member")]
+public class PaymentController(IPaymentService payments, IWebHostEnvironment environment) : Controller
 {
-    public class PaymentController : Controller
+    public async Task<IActionResult> Index(string? status)
     {
-        private readonly IPaymentService _paymentService;
-
-        public PaymentController(IPaymentService paymentService)
-        {
-            _paymentService = paymentService;
-        }
-
-        [Authorize(Roles = "Admin,Manager,Member")]
-        public async Task<IActionResult> Index(string? status)
-        {
-            int? restrictToUserId = User.IsInRole("Member") ? GetCurrentUserId() : null;
-            var payments = await _paymentService.GetAllAsync(restrictToUserId, status);
-
-            ViewBag.Status = status;
-            return View(payments);
-        }
-
-        [Authorize(Roles = "Admin,Manager,Member")]
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var payment = await _paymentService.GetDetailsAsync(id.Value);
-            if (payment == null) return NotFound();
-
-            if (User.IsInRole("Member") && payment.Borrowing?.UserId != GetCurrentUserId())
-            {
-                return Forbid();
-            }
-
-            return View(payment);
-        }
-
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var payment = await _paymentService.GetForEditAsync(id.Value);
-            if (payment == null) return NotFound();
-
-            var vm = new PaymentFormViewModel
-            {
-                PaymentId = payment.PaymentId,
-                BorrowingId = payment.BorrowingId,
-                Amount = payment.Amount,
-                PaymentDate = payment.PaymentDate,
-                PaymentMethod = payment.PaymentMethod,
-                Status = payment.Status,
-                TransactionReference = payment.TransactionReference
-            };
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Edit(int id, PaymentFormViewModel vm)
-        {
-            if (id != vm.PaymentId) return NotFound();
-
-            var payment = await _paymentService.GetForEditAsync(id);
-            if (payment == null) return NotFound();
-
-            vm.PaymentMethod = payment.PaymentMethod;
-            vm.BorrowingId = payment.BorrowingId;
-            ModelState.Remove(nameof(vm.PaymentMethod));
-            ModelState.Remove(nameof(vm.BorrowingId));
-
-            var validation = await _paymentService.ValidateBorrowingAsync(vm.BorrowingId);
-            foreach (var error in validation.Errors)
-            {
-                ModelState.AddModelError(error.Field, error.Message);
-            }
-
-            if (ModelState.IsValid)
-            {
-                bool updated;
-                try
-                {
-                    updated = await _paymentService.UpdateAsync(id, vm);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!await _paymentService.ExistsAsync(id)) return NotFound();
-                    else throw;
-                }
-
-                if (!updated) return NotFound();
-                return RedirectToAction(nameof(Index));
-            }
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var payment = await _paymentService.GetForDeleteAsync(id.Value);
-            if (payment == null) return NotFound();
-
-            return View(payment);
-        }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            await _paymentService.DeleteAsync(id);
-            return RedirectToAction(nameof(Index));
-        }
-
-        private async Task PopulateBorrowingsAsync(PaymentFormViewModel vm)
-        {
-            var borrowings = await _paymentService.GetBorrowingsForDropdownAsync();
-
-            vm.Borrowings = new SelectList(
-                borrowings.Select(b => new
-                {
-                    b.BorrowingId,
-                    Label = $"#{b.BorrowingId} - {b.Book?.Title ?? "Unknown book"} / {b.User?.Name ?? "Unknown member"}"
-                }),
-                "BorrowingId", "Label", vm.BorrowingId);
-        }
-
-        private int GetCurrentUserId()
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(value, out var userId) ? userId : 0;
-        }
+        ViewBag.Status = status;
+        return View(await payments.GetAllAsync(User.IsInRole("Member") ? CurrentUserId() : null, status));
     }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var payment = await payments.GetDetailsAsync(id);
+        if (payment == null) return NotFound();
+        if (User.IsInRole("Member") && payment.Borrowing?.UserId != CurrentUserId()) return Forbid();
+        return View(payment);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> ConfirmCash(int id)
+    {
+        var confirmed = await payments.ConfirmCashAsync(id);
+        TempData["PaymentMessage"] = confirmed ? "Cash received. The borrowing is now active."
+            : "Cash could not be confirmed. The reservation may have expired.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> Checkout(int id)
+    {
+        if (!environment.IsDevelopment()) return NotFound();
+        var payment = await payments.GetDetailsAsync(id);
+        if (payment == null) return NotFound();
+        if (payment.Borrowing?.UserId != CurrentUserId() || payment.PaymentMethod != "Card") return Forbid();
+        if (payment.Status != "Pending") return RedirectToAction(nameof(Details), new { id });
+        return View(payment);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> DemoResult(int id, string outcome)
+    {
+        if (!environment.IsDevelopment()) return NotFound();
+        if (outcome is not ("success" or "failure" or "cancel")) return BadRequest();
+        var completed = await payments.CompleteDemoAsync(id, CurrentUserId(), outcome == "success");
+        if (!completed)
+            TempData["PaymentMessage"] = "The payment could not be completed. The reservation may have expired.";
+        else
+            TempData["PaymentMessage"] = outcome == "success" ? "Demo payment succeeded. Your borrowing is active."
+                : "Payment was not completed. Your borrowing request failed and the book is available again.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    private int CurrentUserId() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }

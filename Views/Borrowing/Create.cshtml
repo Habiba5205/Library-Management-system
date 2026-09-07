@@ -23,12 +23,6 @@
             <p class="text-muted">Borrowing as: <strong>@User.Identity?.Name</strong></p>
 
             <div class="form-group mb-3">
-                <label asp-for="BorrowDate" class="control-label"></label>
-                <input asp-for="BorrowDate" class="form-control" />
-                <span asp-validation-for="BorrowDate" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
                 <label asp-for="LoanDays" class="control-label"></label>
                 <input asp-for="LoanDays" class="form-control" />
                 <span asp-validation-for="LoanDays" class="text-danger"></span>
@@ -40,8 +34,6 @@
                     <option value="">-- Select Payment Method --</option>
                     <option value="Cash">Cash</option>
                     <option value="Card">Card</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Mobile Wallet">Mobile Wallet</option>
                 </select>
                 <span asp-validation-for="PaymentMethod" class="text-danger"></span>
             </div>

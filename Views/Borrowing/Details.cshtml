@@ -33,10 +33,15 @@
         <dd class="col-sm-9">@Model.User?.Name</dd>
 
         <dt class="col-sm-3">Borrow Date</dt>
-        <dd class="col-sm-9">@Model.BorrowDate.ToString("yyyy-MM-dd")</dd>
+        <dd class="col-sm-9">@(Model.Status is "Reserved" or "Failed" ? "-" : Model.BorrowDate.ToString("yyyy-MM-dd"))</dd>
 
         <dt class="col-sm-3">Due Date</dt>
-        <dd class="col-sm-9">@Model.DueDate.ToString("yyyy-MM-dd")</dd>
+        <dd class="col-sm-9">@(Model.Status is "Reserved" or "Failed" ? "-" : Model.DueDate.ToString("yyyy-MM-dd"))</dd>
+        @if (Model.Status == "Reserved")
+        {
+            <dt class="col-sm-3">Reservation Expires (UTC)</dt>
+            <dd class="col-sm-9">@Model.ReservationExpiresAtUtc?.ToString("yyyy-MM-dd HH:mm")</dd>
+        }
 
         <dt class="col-sm-3">Return Date</dt>
         <dd class="col-sm-9">@(Model.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</dd>
@@ -61,7 +66,7 @@
     {
     <a asp-controller="Fine" asp-action="Create" asp-route-borrowingId="@Model.BorrowingId" class="btn btn-outline-danger">Add Fine</a>
     }
-    @if (Model.Status != "Returned" && User.IsInRole("Manager"))
+    @if ((Model.Status is "Borrowed" or "Early Return Requested") && User.IsInRole("Manager"))
     {
         <a asp-action="Return" asp-route-id="@Model.BorrowingId" class="btn btn-success">Return Book</a>
     }

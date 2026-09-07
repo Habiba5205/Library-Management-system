@@ -59,6 +59,8 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> Create(BorrowingFormViewModel vm)
         {
+            if (vm.PaymentMethod == "Card" && !HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+                ModelState.AddModelError("PaymentMethod", "Card checkout is currently available in the development demo only.");
             // Always the logged-in member - never trust a UserId posted from the form.
             vm.UserId = GetCurrentUserId();
 
@@ -70,8 +72,10 @@ namespace Lib_System.Controllers
 
             if (ModelState.IsValid)
             {
-                await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.BorrowDate, vm.LoanDays, vm.PaymentMethod);
-                return RedirectToAction(nameof(Index));
+                var paymentId = await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.BorrowDate, vm.LoanDays, vm.PaymentMethod);
+                if (paymentId.HasValue)
+                    return RedirectToAction(vm.PaymentMethod == "Card" ? "Checkout" : "Details", "Payment", new { id = paymentId.Value });
+                ModelState.AddModelError("", "The book could not be reserved. It may have just been reserved by another member.");
             }
 
             await PopulateDropdownsAsync(vm);

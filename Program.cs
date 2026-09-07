@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<PaymentWorkflowRepository>();
+builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IBorrowingRepository, BorrowingRepository>();
@@ -98,6 +101,15 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    if (!context.Request.Path.StartsWithSegments("/css") &&
+        !context.Request.Path.StartsWithSegments("/js") &&
+        !context.Request.Path.StartsWithSegments("/lib"))
+        await context.RequestServices.GetRequiredService<PaymentWorkflowRepository>().ExpireAsync();
+    await next();
+});
 
 app.MapStaticAssets();
 

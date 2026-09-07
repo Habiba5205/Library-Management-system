@@ -10,7 +10,7 @@ namespace Lib_System.Services.Interfaces
         Task<Borrowing?> GetReturnCandidateAsync(int id);
 
         Task<ServiceResult> ValidateForCreateAsync(int bookId, int userId);
-        Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod);
+        Task<int?> CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod);
 
         Task<ServiceResult> RequestEarlyReturnAsync(int id);
         Task<ServiceResult> ReturnBorrowingAsync(int id);

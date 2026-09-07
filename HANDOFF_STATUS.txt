@@ -1,5 +1,20 @@
 Library Management System MVC - Handoff Status
 
+LATEST UPDATE - 2026-09-07
+Payment now controls new borrowings:
+- Cash: reserve book for 48 hours; manager confirms cash received.
+- Confirmed payment starts borrowing and calculates the due date from that day.
+- Unpaid reservations fail and release books on expiry.
+- Card: Development-only demo checkout with success, failure, and cancellation.
+- Card success starts borrowing automatically; managers have no card actions.
+- Abandoned card checkout expires after 30 minutes.
+- Expiry runs every minute and before requests, catching up after downtime.
+- Added and applied AddPaymentReservations migration to local LibSystemMvcDb.
+- Historical borrowings are preserved and not converted to reservations.
+- No real card gateway is connected and no real money is collected.
+- Run Tests/PaymentFlow/PaymentFlow.csproj for isolated LocalDB checks.
+The older status notes below describe previous project stages.
+
 Current stopping point:
 Full catalog, user management, and borrowing flow are complete: Categories,
 Authors, Books (with category/author selection, search, filtering), Users

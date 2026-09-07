@@ -5,6 +5,14 @@
 }
 
 <h1>Payment Details</h1>
+@if (TempData["PaymentMessage"] is string message)
+{
+    <p class="alert alert-info">@message</p>
+}
+@if (Model.Status == "Pending" && Model.PaymentMethod == "Cash" && Model.Borrowing?.Status == "Reserved")
+{
+    <p class="alert alert-info">Pay the manager in person before @Model.Borrowing.ReservationExpiresAtUtc?.ToString("yyyy-MM-dd HH:mm") UTC to confirm this borrowing.</p>
+}
 
 <div>
     <dl class="row">
@@ -39,9 +47,16 @@
 </div>
 
 <div class="mt-3">
-    @if (User.IsInRole("Manager"))
+    @if (User.IsInRole("Manager") && Model.PaymentMethod == "Cash" && Model.Status == "Pending" && Model.Borrowing?.Status == "Reserved")
     {
-    <a asp-action="Edit" asp-route-id="@Model.PaymentId" class="btn btn-warning">Edit</a>
+        <form asp-action="ConfirmCash" method="post" class="mb-3">
+            <input type="hidden" name="id" value="@Model.PaymentId" />
+            <button type="submit" class="btn btn-success">Confirm Cash Received</button>
+        </form>
+    }
+    @if (User.IsInRole("Member") && Model.PaymentMethod == "Card" && Model.Status == "Pending")
+    {
+        <a asp-action="Checkout" asp-route-id="@Model.PaymentId" class="btn btn-primary">Continue to Demo Checkout</a>
     }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

@@ -97,7 +97,8 @@ namespace Lib_System.Services
             book.Title = vm.Title;
             book.PublicationYear = vm.PublicationYear;
             book.Price = vm.Price;
-            book.AvailabilityStatus = vm.AvailabilityStatus;
+            if (book.AvailabilityStatus is not ("Reserved" or "Borrowed"))
+                book.AvailabilityStatus = vm.AvailabilityStatus;
             book.CategoryId = vm.CategoryId;
             book.ManagerId = vm.ManagerId;
 
