@@ -16,7 +16,7 @@ namespace Lib_System.Repositories
 
         public async Task<List<Role>> GetAllAsync()
         {
-            return await _context.Roles.OrderBy(r => r.RoleName).ToListAsync();
+            return await _context.Roles.OrderByDescending(r => r.RoleId).ToListAsync();
         }
 
         public async Task<Role?> GetByNameAsync(string roleName)

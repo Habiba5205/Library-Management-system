@@ -16,7 +16,7 @@ namespace Lib_System.Repositories
 
         public async Task<List<Author>> GetAllAsync()
         {
-            return await _context.Authors.ToListAsync();
+            return await _context.Authors.OrderByDescending(a => a.AuthorId).ToListAsync();
         }
 
         public async Task<Author?> GetByIdAsync(int id)

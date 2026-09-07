@@ -7,9 +7,9 @@ namespace Lib_System.Repositories;
 
 public class PaymentWorkflowRepository(ApplicationDbContext db, TimeProvider clock)
 {
-    public async Task<int?> ReserveAsync(int bookId, int userId, int loanDays, string method)
+    public async Task<int?> ReserveAsync(int bookId, int userId, string method)
     {
-        if (method is not ("Cash" or "Card") || loanDays is < 1 or > 60)
+        if (method is not ("Cash" or "Card"))
             return null;
 
         await ExpireAsync();
@@ -26,8 +26,8 @@ public class PaymentWorkflowRepository(ApplicationDbContext db, TimeProvider clo
         var now = clock.GetUtcNow().UtcDateTime;
         var borrowing = new Borrowing
         {
-            BookId = bookId, UserId = userId, LoanDays = loanDays,
-            BorrowDate = now.Date, DueDate = now.Date.AddDays(loanDays),
+            BookId = bookId, UserId = userId, LoanDays = Borrowing.StandardLoanDays,
+            BorrowDate = now.Date, DueDate = now.Date.AddDays(Borrowing.StandardLoanDays),
             Status = "Reserved",
             ReservationExpiresAtUtc = method == "Cash" ? now.AddDays(2) : now.AddMinutes(30)
         };
@@ -68,7 +68,8 @@ public class PaymentWorkflowRepository(ApplicationDbContext db, TimeProvider clo
             payment.TransactionReference = method == "Card" ? $"DEMO-{Guid.NewGuid():N}" : null;
             borrowing.Status = "Borrowed";
             borrowing.BorrowDate = now.Date;
-            borrowing.DueDate = now.Date.AddDays(borrowing.LoanDays);
+            borrowing.LoanDays = Borrowing.StandardLoanDays;
+            borrowing.DueDate = now.Date.AddDays(Borrowing.StandardLoanDays);
             borrowing.Book!.AvailabilityStatus = "Borrowed";
         }
         await db.SaveChangesAsync();

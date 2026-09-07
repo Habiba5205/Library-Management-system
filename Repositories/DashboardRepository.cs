@@ -42,7 +42,7 @@ namespace Lib_System.Repositories
                 RecentBorrowings = await borrowingsQuery
                     .Include(b => b.Book)
                     .Include(b => b.User)
-                    .OrderByDescending(b => b.BorrowDate)
+                    .OrderByDescending(b => b.BorrowingId)
                     .Take(5)
                     .ToListAsync(),
                 RecentPayments = await paymentsQuery
@@ -50,7 +50,7 @@ namespace Lib_System.Repositories
                         .ThenInclude(b => b!.Book)
                     .Include(p => p.Borrowing)
                         .ThenInclude(b => b!.User)
-                    .OrderByDescending(p => p.PaymentDate)
+                    .OrderByDescending(p => p.PaymentId)
                     .Take(5)
                     .ToListAsync()
             };

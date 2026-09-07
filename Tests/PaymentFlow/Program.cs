@@ -35,44 +35,44 @@ try
         Console.WriteLine("PASS: " + label);
     }
     var bookId = await Book();
-    var cash = (await workflow.ReserveAsync(bookId, member.UserId, 10, "Cash"))!.Value;
+    var cash = (await workflow.ReserveAsync(bookId, member.UserId, "Cash"))!.Value;
     var p = await Read(cash);
     Check(p.Status == "Pending" && p.Borrowing!.Status == "Reserved" && p.Borrowing.Book!.AvailabilityStatus == "Reserved", "Cash reserves without borrowing");
     Check(p.Borrowing!.ReservationExpiresAtUtc == clock.GetUtcNow().UtcDateTime.AddHours(48), "Cash deadline is exactly 48 hours");
-    Check(await workflow.ReserveAsync(bookId, member.UserId, 10, "Cash") == null, "Cannot reserve an unavailable book");
+    Check(await workflow.ReserveAsync(bookId, member.UserId, "Cash") == null, "Cannot reserve an unavailable book");
     clock.Advance(TimeSpan.FromHours(24));
     Check(await workflow.CompleteAsync(cash, "Cash", null, true), "Manager confirms cash before deadline");
     p = await Read(cash);
-    Check(p.Status == "Paid" && p.Borrowing!.Status == "Borrowed" && p.Borrowing.DueDate == clock.GetUtcNow().UtcDateTime.Date.AddDays(10), "Loan dates start at payment");
+    Check(p.Status == "Paid" && p.Borrowing!.Status == "Borrowed" && p.Borrowing.DueDate == clock.GetUtcNow().UtcDateTime.Date.AddDays(14), "Cash loan lasts 14 days from payment");
     var due = p.Borrowing!.DueDate;
     clock.Advance(TimeSpan.FromHours(1));
     Check(await workflow.CompleteAsync(cash, "Cash", null, true) && (await Read(cash)).Borrowing!.DueDate == due, "Duplicate confirmation does not restart loan");
-    var expired = (await workflow.ReserveAsync(await Book(), member.UserId, 14, "Cash"))!.Value;
+    var expired = (await workflow.ReserveAsync(await Book(), member.UserId, "Cash"))!.Value;
     clock.Advance(TimeSpan.FromHours(48));
     Check(!await workflow.CompleteAsync(expired, "Cash", null, true), "Payment at expiry boundary is rejected");
     p = await Read(expired);
     Check(p.Status == "Failed" && p.Borrowing!.Status == "Failed" && p.Borrowing.Book!.AvailabilityStatus == "Available", "Expired reservation releases book");
-    var unattended = (await workflow.ReserveAsync(await Book(), member.UserId, 14, "Cash"))!.Value;
+    var unattended = (await workflow.ReserveAsync(await Book(), member.UserId, "Cash"))!.Value;
     clock.Advance(TimeSpan.FromHours(49));
     await workflow.ExpireAsync();
     Check((await Read(unattended)).Status == "Failed", "Unpaid reservation expires without manager");
-    var card = (await workflow.ReserveAsync(await Book(), member.UserId, 7, "Card"))!.Value;
+    var card = (await workflow.ReserveAsync(await Book(), member.UserId, "Card"))!.Value;
     Check(!await workflow.CompleteAsync(card, "Cash", null, true), "Cash confirmation cannot modify card payment");
     Check(!await workflow.CompleteAsync(card, "Card", member.UserId + 1, true), "Another member cannot complete card payment");
     Check(await workflow.CompleteAsync(card, "Card", member.UserId, true), "Demo card success");
     p = await Read(card);
-    Check(p.Status == "Paid" && p.Borrowing!.Book!.AvailabilityStatus == "Borrowed", "Card success starts borrowing");
-    var failed = (await workflow.ReserveAsync(await Book(), member.UserId, 7, "Card"))!.Value;
+    Check(p.Status == "Paid" && p.Borrowing!.Book!.AvailabilityStatus == "Borrowed" && p.Borrowing.DueDate == p.Borrowing.BorrowDate.AddDays(14), "Card success starts a 14-day borrowing");
+    var failed = (await workflow.ReserveAsync(await Book(), member.UserId, "Card"))!.Value;
     Check(await workflow.CompleteAsync(failed, "Card", member.UserId, false), "Card failure or cancellation");
     p = await Read(failed);
     Check(p.Status == "Failed" && p.Borrowing!.Book!.AvailabilityStatus == "Available", "Card failure releases book");
     Check(!await workflow.CompleteAsync(failed, "Card", member.UserId, true), "Failed payment cannot be replayed as success");
-    Check(await workflow.ReserveAsync(await Book(), member.UserId, 7, "Mobile Wallet") == null, "Other payment methods rejected");
+    Check(await workflow.ReserveAsync(await Book(), member.UserId, "Mobile Wallet") == null, "Other payment methods rejected");
     var sharedBook = await Book();
     async Task<int?> CompetingReservation()
     {
         await using var contender = new ApplicationDbContext(options);
-        return await new PaymentWorkflowRepository(contender, clock).ReserveAsync(sharedBook, member.UserId, 7, "Cash");
+        return await new PaymentWorkflowRepository(contender, clock).ReserveAsync(sharedBook, member.UserId, "Cash");
     }
     var competing = await Task.WhenAll(CompetingReservation(), CompetingReservation());
     Check(competing.Count(id => id.HasValue) == 1, "Concurrent requests reserve a book only once");

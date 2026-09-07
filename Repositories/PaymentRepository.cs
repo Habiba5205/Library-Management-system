@@ -34,8 +34,7 @@ namespace Lib_System.Repositories
             }
 
             return await query
-                .OrderByDescending(p => p.PaymentDate)
-                .ThenBy(p => p.Borrowing!.Book!.Title)
+                .OrderByDescending(p => p.PaymentId)
                 .ToListAsync();
         }
 

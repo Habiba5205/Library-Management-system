@@ -21,7 +21,7 @@
 @if (Model.BookAuthors != null && Model.BookAuthors.Any())
 {
     <ul class="list-group">
-        @foreach (var bookAuthor in Model.BookAuthors)
+        @foreach (var bookAuthor in Model.BookAuthors.OrderByDescending(ba => ba.BookId))
         {
             <li class="list-group-item">
                 @bookAuthor.Book?.Title (@bookAuthor.Book?.PublicationYear)

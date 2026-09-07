@@ -42,7 +42,7 @@ namespace Lib_System.Repositories
                 query = query.Where(b => b.AvailabilityStatus == "Available");
             }
 
-            return await query.OrderBy(b => b.Title).ToListAsync();
+            return await query.OrderByDescending(b => b.BookId).ToListAsync();
         }
 
         public async Task<Book?> GetByIdAsync(int id)
@@ -80,7 +80,7 @@ namespace Lib_System.Repositories
         {
             return await _context.Books
                 .Where(b => b.AvailabilityStatus == "Available")
-                .OrderBy(b => b.Title)
+                .OrderByDescending(b => b.BookId)
                 .ToListAsync();
         }
 

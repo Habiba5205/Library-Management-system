@@ -42,7 +42,7 @@
 @if (Model.ManagedBooks != null && Model.ManagedBooks.Any())
 {
     <ul class="list-group mb-3">
-        @foreach (var book in Model.ManagedBooks)
+        @foreach (var book in Model.ManagedBooks.OrderByDescending(b => b.BookId))
         {
             <li class="list-group-item">@book.Title</li>
         }
@@ -57,7 +57,7 @@ else
 @if (Model.Borrowings != null && Model.Borrowings.Any())
 {
     <ul class="list-group mb-3">
-        @foreach (var borrowing in Model.Borrowings)
+        @foreach (var borrowing in Model.Borrowings.OrderByDescending(b => b.BorrowingId))
         {
             <li class="list-group-item">@borrowing.Book?.Title - @borrowing.Status</li>
         }

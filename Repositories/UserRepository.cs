@@ -18,7 +18,7 @@ namespace Lib_System.Repositories
         {
             return await _context.Users
                 .Include(u => u.Role)
-                .OrderBy(u => u.Name)
+                .OrderByDescending(u => u.UserId)
                 .ToListAsync();
         }
 
@@ -70,14 +70,14 @@ namespace Lib_System.Repositories
                 query = query.Where(u => u.UserId == restrictToUserId.Value);
             }
 
-            return await query.OrderBy(u => u.Name).ToListAsync();
+            return await query.OrderByDescending(u => u.UserId).ToListAsync();
         }
 
         public async Task<List<User>> GetManagersAsync()
         {
             return await _context.Users
                 .Where(u => u.Role != null && u.Role.RoleName == "Manager")
-                .OrderBy(u => u.Name)
+                .OrderByDescending(u => u.UserId)
                 .ToListAsync();
         }
 

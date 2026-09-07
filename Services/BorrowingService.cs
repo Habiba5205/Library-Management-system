@@ -57,9 +57,9 @@ namespace Lib_System.Services
             return result;
         }
 
-        public Task<int?> CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod)
+        public Task<int?> CreateAsync(int bookId, int userId, string paymentMethod)
         {
-            return _workflow.ReserveAsync(bookId, userId, loanDays, paymentMethod);
+            return _workflow.ReserveAsync(bookId, userId, paymentMethod);
         }
 
         public async Task<ServiceResult> ReturnBorrowingAsync(int id)

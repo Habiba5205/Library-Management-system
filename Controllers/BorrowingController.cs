@@ -72,7 +72,7 @@ namespace Lib_System.Controllers
 
             if (ModelState.IsValid)
             {
-                var paymentId = await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.BorrowDate, vm.LoanDays, vm.PaymentMethod);
+                var paymentId = await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.PaymentMethod);
                 if (paymentId.HasValue)
                     return RedirectToAction(vm.PaymentMethod == "Card" ? "Checkout" : "Details", "Payment", new { id = paymentId.Value });
                 ModelState.AddModelError("", "The book could not be reserved. It may have just been reserved by another member.");

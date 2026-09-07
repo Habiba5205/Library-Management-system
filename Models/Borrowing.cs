@@ -4,6 +4,7 @@ namespace Lib_System.Models;
 
 public class Borrowing
 {
+    public const int StandardLoanDays = 14;
     public int BorrowingId { get; set; }
 
     public int BookId { get; set; }
@@ -12,7 +13,7 @@ public class Borrowing
 
     public DateTime? ReservationExpiresAtUtc { get; set; }
 
-    public int LoanDays { get; set; } = 14;
+    public int LoanDays { get; set; } = StandardLoanDays;
 
     [DataType(DataType.Date)]
     public DateTime BorrowDate { get; set; } = DateTime.Today;
