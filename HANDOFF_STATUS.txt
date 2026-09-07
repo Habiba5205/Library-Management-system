@@ -1,5 +1,19 @@
 Library Management System MVC - Handoff Status
 
+AUTOMATIC FINES - 2026-09-07
+- Manual fine creation and Add Fine shortcuts have been removed. Existing
+  manual fine records are preserved.
+- 5 EGP per overdue calendar day, starting the day after the due date.
+- One automatic fine per borrowing; daily amount updates stop on actual return.
+- Active overdue loans and early-return requests are checked every minute and
+  before requests. Downtime is caught up on the next check.
+- Manual fines are preserved; old completed loans are not retroactively charged.
+- Managers can mark automatic fines Paid after return; amounts and links are
+  protected and automatic fines cannot be deleted.
+- Added AddAutomaticOverdueFines migration.
+- Integration checks include rate, due-date boundary, catch-up, frozen returned
+  amounts, duplicate prevention, and manager payment restrictions.
+
 LATEST UPDATE - 2026-09-07
 Payment now controls new borrowings:
 - Cash: reserve book for 48 hours; manager confirms cash received.

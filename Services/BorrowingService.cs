@@ -12,18 +12,20 @@ namespace Lib_System.Services
         private readonly IUserRepository _userRepository;
         private readonly IPaymentRepository _paymentRepository;
         private readonly PaymentWorkflowRepository _workflow;
+        private readonly OverdueFineRepository _overdueFines;
 
         public BorrowingService(
             IBorrowingRepository borrowingRepository,
             IBookRepository bookRepository,
             IUserRepository userRepository,
-            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow)
+            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow, OverdueFineRepository overdueFines)
         {
             _borrowingRepository = borrowingRepository;
             _bookRepository = bookRepository;
             _userRepository = userRepository;
             _paymentRepository = paymentRepository;
             _workflow = workflow;
+            _overdueFines = overdueFines;
         }
 
         public Task<List<Borrowing>> GetBorrowingsAsync(int? restrictToUserId, string? status)
@@ -79,6 +81,7 @@ namespace Lib_System.Services
                 return result;
             }
 
+            await _overdueFines.SynchronizeAsync();
             borrowing.ReturnDate = DateTime.Today;
             borrowing.Status = "Returned";
 
@@ -88,6 +91,7 @@ namespace Lib_System.Services
             }
 
             await _borrowingRepository.SaveChangesAsync();
+            await _overdueFines.SynchronizeAsync(id);
             return result;
         }
 

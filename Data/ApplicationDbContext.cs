@@ -49,6 +49,11 @@ public class ApplicationDbContext : DbContext
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<Fine>()
+            .HasIndex(fine => fine.BorrowingId)
+            .IsUnique()
+            .HasFilter("[IsAutomatic] = 1");
+
+        modelBuilder.Entity<Fine>()
             .Property(fine => fine.Amount)
             .HasPrecision(18, 2);
 

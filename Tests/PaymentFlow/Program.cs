@@ -133,6 +133,67 @@ try
         !await db.Books.AnyAsync(b => b.BookId == protectedBookId), "Available book without history can be deleted");
     var historicalBookId = (await Read(expired)).Borrowing!.BookId;
     Check(!(await bookService.DeleteAsync(historicalBookId)).Success, "Available book with borrowing history cannot be deleted");
+    var overdueFines = new OverdueFineRepository(db, clock);
+    async Task<Borrowing> Loan(string status, int dueDaysAgo)
+    {
+        var loan = new Borrowing
+        {
+            BookId = await Book(), UserId = member.UserId,
+            BorrowDate = clock.GetLocalNow().Date.AddDays(-14 - dueDaysAgo),
+            DueDate = clock.GetLocalNow().Date.AddDays(-dueDaysAgo), Status = status
+        };
+        db.Borrowings.Add(loan);
+        await db.SaveChangesAsync();
+        return loan;
+    }
+    var dueToday = await Loan("Borrowed", 0);
+    var overdue = await Loan("Borrowed", 3);
+    var earlyRequested = await Loan("Early Return Requested", 1);
+    var unpaidReservation = await Loan("Reserved", 3);
+    var failedLoan = await Loan("Failed", 3);
+    var manual = new Fine { BorrowingId = overdue.BorrowingId, Amount = 7, Reason = "Damage", Status = "Unpaid" };
+    db.Fines.Add(manual);
+    await db.SaveChangesAsync();
+    await overdueFines.SynchronizeAsync();
+    Check(!await db.Fines.AnyAsync(f => f.BorrowingId == dueToday.BorrowingId && f.IsAutomatic), "No fine on due date");
+    var automatic = await db.Fines.SingleAsync(f => f.BorrowingId == overdue.BorrowingId && f.IsAutomatic);
+    Check(automatic.Amount == 15, "Three overdue days cost 15 EGP");
+    Check(await db.Fines.AnyAsync(f => f.BorrowingId == earlyRequested.BorrowingId && f.IsAutomatic && f.Amount == 5), "Early return request does not stop fines");
+    Check(!await db.Fines.AnyAsync(f => (f.BorrowingId == unpaidReservation.BorrowingId || f.BorrowingId == failedLoan.BorrowingId) && f.IsAutomatic), "Reservations and failed loans are excluded");
+    Check(manual.Amount == 7 && !manual.IsAutomatic, "Manual fine is preserved");
+    clock.Advance(TimeSpan.FromDays(2));
+    await overdueFines.SynchronizeAsync();
+    Check(automatic.Amount == 25 && await db.Fines.CountAsync(f => f.BorrowingId == overdue.BorrowingId && f.IsAutomatic) == 1, "Catch-up increases one fine without duplication");
+    var fineService = new FineService(new FineRepository(db), new BorrowingRepository(db));
+    try
+    {
+        await fineService.UpdateAsync(automatic.FineId, new FineFormViewModel { Status = "Paid" });
+        throw new Exception("Unreturned book fine accepted as paid");
+    }
+    catch (InvalidOperationException) { Console.WriteLine("PASS: Automatic fine cannot be paid before return"); }
+    overdue.Status = "Returned";
+    overdue.ReturnDate = clock.GetLocalNow().Date;
+    await db.SaveChangesAsync();
+    await overdueFines.SynchronizeAsync(overdue.BorrowingId);
+    clock.Advance(TimeSpan.FromDays(4));
+    await overdueFines.SynchronizeAsync();
+    Check(automatic.Amount == 25, "Returned book fine stops growing");
+    Check(await fineService.UpdateAsync(automatic.FineId, new FineFormViewModel { Status = "Paid", Amount = 1 }), "Manager can settle returned book fine");
+    Check(automatic.Status == "Paid" && automatic.Amount == 25, "Automatic amount cannot be overridden");
+    try
+    {
+        await fineService.DeleteAsync(automatic.FineId);
+        throw new Exception("Automatic fine was deleted");
+    }
+    catch (InvalidOperationException) { Console.WriteLine("PASS: Automatic fine deletion is blocked"); }
+    var concurrentLoan = await Loan("Borrowed", 2);
+    async Task RefreshFines()
+    {
+        await using var workerDb = new ApplicationDbContext(options);
+        await new OverdueFineRepository(workerDb, clock).SynchronizeAsync();
+    }
+    await Task.WhenAll(RefreshFines(), RefreshFines());
+    Check(await db.Fines.CountAsync(f => f.BorrowingId == concurrentLoan.BorrowingId && f.IsAutomatic) == 1, "Concurrent checks create only one automatic fine");
     var dashboardRepository = new DashboardRepository(db);
     var memberDashboard = await dashboardRepository.GetDashboardAsync(true, member.UserId);
     var staffDashboard = await dashboardRepository.GetDashboardAsync(false, member.UserId);

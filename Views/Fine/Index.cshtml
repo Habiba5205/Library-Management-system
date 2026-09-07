@@ -6,13 +6,6 @@
 
 <h1>Fines</h1>
 
-@if (User.IsInRole("Manager"))
-{
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Add Fine</a>
-</p>
-}
-
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
         <select name="status" class="form-select">
@@ -61,11 +54,13 @@
                 @if (User.IsInRole("Manager"))
                 {
                 <a asp-action="Edit" asp-route-id="@item.FineId" class="btn btn-sm btn-warning">Edit</a>
-                <a asp-action="Delete" asp-route-id="@item.FineId" class="btn btn-sm btn-danger">Delete</a>
+                @if (!item.IsAutomatic)
+                {
+                    <a asp-action="Delete" asp-route-id="@item.FineId" class="btn btn-sm btn-danger">Delete</a>
+                }
                 }
             </td>
         </tr>
 }
     </tbody>
 </table>
-

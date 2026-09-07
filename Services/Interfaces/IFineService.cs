@@ -11,7 +11,6 @@ namespace Lib_System.Services.Interfaces
         Task<Fine?> GetForDeleteAsync(int id);
 
         Task<ServiceResult> ValidateBorrowingAsync(int borrowingId);
-        Task CreateAsync(FineFormViewModel vm);
         Task<bool> UpdateAsync(int id, FineFormViewModel vm);
 
         Task<bool> ExistsAsync(int id);

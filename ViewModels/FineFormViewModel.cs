@@ -6,6 +6,7 @@ namespace Lib_System.ViewModels
     public class FineFormViewModel
     {
         public int FineId { get; set; }
+        public bool IsAutomatic { get; set; }
 
         [Required]
         [Display(Name = "Borrowing")]
@@ -29,4 +30,3 @@ namespace Lib_System.ViewModels
         public SelectList? Borrowings { get; set; }
     }
 }
-

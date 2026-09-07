@@ -5,6 +5,11 @@
 }
 
 <h1>Delete Fine</h1>
+<div asp-validation-summary="All" class="text-danger"></div>
+@if (Model.IsAutomatic)
+{
+    <p class="alert alert-info">Automatic overdue fines cannot be deleted.</p>
+}
 
 <div class="alert alert-warning">
     Are you sure you want to delete this fine?
@@ -32,7 +37,6 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="FineId" />
-    <input type="submit" value="Delete" class="btn btn-danger" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@Model.IsAutomatic" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
-

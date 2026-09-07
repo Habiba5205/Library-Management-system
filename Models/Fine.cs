@@ -7,6 +7,7 @@ public class Fine
     public int FineId { get; set; }
 
     public int BorrowingId { get; set; }
+    public bool IsAutomatic { get; set; }
 
     [Range(0.01, 999999)]
     public decimal Amount { get; set; }
@@ -24,4 +25,3 @@ public class Fine
 
     public Borrowing? Borrowing { get; set; }
 }
-

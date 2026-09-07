@@ -14,10 +14,11 @@ public class ReservationExpiryWorker(IServiceScopeFactory scopes, ILogger<Reserv
             {
                 using var scope = scopes.CreateScope();
                 await scope.ServiceProvider.GetRequiredService<PaymentWorkflowRepository>().ExpireAsync();
+                await scope.ServiceProvider.GetRequiredService<OverdueFineRepository>().SynchronizeAsync();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unable to expire pending reservations.");
+                logger.LogError(ex, "Unable to update reservations and overdue fines.");
             }
         } while (await timer.WaitForNextTickAsync(stoppingToken));
     }

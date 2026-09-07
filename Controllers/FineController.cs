@@ -44,37 +44,6 @@ namespace Lib_System.Controllers
         }
 
         [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create(int? borrowingId)
-        {
-            var vm = new FineFormViewModel();
-            if (borrowingId.HasValue) vm.BorrowingId = borrowingId.Value;
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create(FineFormViewModel vm)
-        {
-            var validation = await _fineService.ValidateBorrowingAsync(vm.BorrowingId);
-            foreach (var error in validation.Errors)
-            {
-                ModelState.AddModelError(error.Field, error.Message);
-            }
-
-            if (ModelState.IsValid)
-            {
-                await _fineService.CreateAsync(vm);
-                return RedirectToAction(nameof(Index));
-            }
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -85,6 +54,7 @@ namespace Lib_System.Controllers
             var vm = new FineFormViewModel
             {
                 FineId = fine.FineId,
+                IsAutomatic = fine.IsAutomatic,
                 BorrowingId = fine.BorrowingId,
                 Amount = fine.Amount,
                 FineDate = fine.FineDate,
@@ -103,6 +73,19 @@ namespace Lib_System.Controllers
         {
             if (id != vm.FineId) return NotFound();
 
+            var storedFine = await _fineService.GetForEditAsync(id);
+            if (storedFine == null) return NotFound();
+            vm.IsAutomatic = storedFine.IsAutomatic;
+            if (storedFine.IsAutomatic)
+            {
+                vm.BorrowingId = storedFine.BorrowingId;
+                vm.Amount = storedFine.Amount;
+                vm.FineDate = storedFine.FineDate;
+                vm.Reason = storedFine.Reason;
+                foreach (var field in new[] { nameof(vm.BorrowingId), nameof(vm.Amount), nameof(vm.FineDate), nameof(vm.Reason) })
+                    ModelState.Remove(field);
+            }
+
             var validation = await _fineService.ValidateBorrowingAsync(vm.BorrowingId);
             foreach (var error in validation.Errors)
             {
@@ -115,6 +98,12 @@ namespace Lib_System.Controllers
                 try
                 {
                     updated = await _fineService.UpdateAsync(id, vm);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    await PopulateBorrowingsAsync(vm);
+                    return View(vm);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -146,7 +135,15 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _fineService.DeleteAsync(id);
+            try
+            {
+                await _fineService.DeleteAsync(id);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View("Delete", await _fineService.GetForDeleteAsync(id));
+            }
             return RedirectToAction(nameof(Index));
         }
 

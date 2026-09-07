@@ -6,6 +6,24 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 ## Features
 
+### Automatic Overdue Fines
+
+Manual fine creation is disabled. New fines are generated automatically;
+previously recorded manual fines remain in the database.
+
+- Active loans accrue 5 EGP per overdue calendar day, starting the day after
+  the due date. An early-return request alone does not stop the calculation.
+- There is one automatic fine per borrowing. The amount catches up after
+  downtime and stops growing on the recorded return date.
+- Checks run every minute while the app is running and before page requests.
+- Existing active overdue loans are included. Old completed loans without an
+  automatic fine are not retroactively charged. Existing manual fines remain
+  separate and unchanged.
+- Members see their own fines. Managers can mark an automatic fine Paid after
+  the book is returned, but cannot change its amount, reassign it, waive it, or
+  delete it.
+- Apply the AddAutomaticOverdueFines migration before running the updated app.
+
 ### Payment Flow
 
 - Members choose Cash or Card when reserving a book.

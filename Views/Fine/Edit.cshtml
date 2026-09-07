@@ -14,7 +14,7 @@
 
             <div class="form-group mb-3">
                 <label asp-for="BorrowingId" class="control-label"></label>
-                <select asp-for="BorrowingId" asp-items="Model.Borrowings" class="form-select">
+                <select asp-for="BorrowingId" asp-items="Model.Borrowings" class="form-select" disabled="@Model.IsAutomatic">
                     <option value="">-- Select Borrowing --</option>
                 </select>
                 <span asp-validation-for="BorrowingId" class="text-danger"></span>
@@ -22,19 +22,19 @@
 
             <div class="form-group mb-3">
                 <label asp-for="Amount" class="control-label"></label>
-                <input asp-for="Amount" class="form-control" />
+                <input asp-for="Amount" class="form-control" readonly="@Model.IsAutomatic" />
                 <span asp-validation-for="Amount" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
                 <label asp-for="FineDate" class="control-label"></label>
-                <input asp-for="FineDate" class="form-control" />
+                <input asp-for="FineDate" class="form-control" readonly="@Model.IsAutomatic" />
                 <span asp-validation-for="FineDate" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
                 <label asp-for="Reason" class="control-label"></label>
-                <input asp-for="Reason" class="form-control" />
+                <input asp-for="Reason" class="form-control" readonly="@Model.IsAutomatic" />
                 <span asp-validation-for="Reason" class="text-danger"></span>
             </div>
 
@@ -43,7 +43,10 @@
                 <select asp-for="Status" class="form-select">
                     <option value="Unpaid">Unpaid</option>
                     <option value="Paid">Paid</option>
-                    <option value="Waived">Waived</option>
+                    @if (!Model.IsAutomatic)
+                    {
+                        <option value="Waived">Waived</option>
+                    }
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
@@ -59,4 +62,3 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-

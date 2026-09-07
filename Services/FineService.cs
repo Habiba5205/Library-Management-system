@@ -39,25 +39,22 @@ namespace Lib_System.Services
             return result;
         }
 
-        public async Task CreateAsync(FineFormViewModel vm)
-        {
-            var fine = new Fine
-            {
-                BorrowingId = vm.BorrowingId,
-                Amount = vm.Amount,
-                FineDate = vm.FineDate,
-                Reason = vm.Reason,
-                Status = vm.Status
-            };
-
-            await _fineRepository.AddAsync(fine);
-            await _fineRepository.SaveChangesAsync();
-        }
-
         public async Task<bool> UpdateAsync(int id, FineFormViewModel vm)
         {
             var fine = await _fineRepository.GetByIdAsync(id);
             if (fine == null) return false;
+
+            if (fine.IsAutomatic)
+            {
+                if (vm.Status is not ("Paid" or "Unpaid"))
+                    throw new InvalidOperationException("Automatic fines can only be Unpaid or Paid.");
+                var borrowing = await _borrowingRepository.GetByIdAsync(fine.BorrowingId);
+                if (vm.Status == "Paid" && borrowing?.Status != "Returned")
+                    throw new InvalidOperationException("Return the book before paying its automatic fine. The amount may still increase.");
+                fine.Status = vm.Status;
+                await _fineRepository.SaveChangesAsync();
+                return true;
+            }
 
             fine.BorrowingId = vm.BorrowingId;
             fine.Amount = vm.Amount;
@@ -76,6 +73,8 @@ namespace Lib_System.Services
             var fine = await _fineRepository.GetByIdAsync(id);
             if (fine != null)
             {
+                if (fine.IsAutomatic)
+                    throw new InvalidOperationException("Automatic overdue fines cannot be deleted.");
                 await _fineRepository.RemoveAsync(fine);
                 await _fineRepository.SaveChangesAsync();
             }
