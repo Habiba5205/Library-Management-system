@@ -127,6 +127,12 @@ namespace Lib_System.Controllers
                 {
                     updated = await _bookService.UpdateAsync(id, vm);
                 }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(nameof(vm.AvailabilityStatus), ex.Message);
+                    await PopulateDropdownsAsync(vm);
+                    return View(vm);
+                }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!await _bookService.ExistsAsync(id)) return NotFound();

@@ -74,6 +74,9 @@ namespace Lib_System.Services
         public async Task<ServiceResult> ValidateForEditAsync(int id, BookFormViewModel vm)
         {
             var result = new ServiceResult();
+            var statusError = await ValidateAvailabilityAsync(id, vm.AvailabilityStatus);
+            if (statusError != null)
+                result.AddError(nameof(vm.AvailabilityStatus), statusError);
 
             if (vm.SelectedAuthorIds == null || vm.SelectedAuthorIds.Count == 0)
             {
@@ -90,6 +93,10 @@ namespace Lib_System.Services
 
         public async Task<bool> UpdateAsync(int id, BookFormViewModel vm)
         {
+            var statusError = await ValidateAvailabilityAsync(id, vm.AvailabilityStatus);
+            if (statusError != null)
+                throw new InvalidOperationException(statusError);
+
             var book = await _bookRepository.GetByIdWithAuthorsAsync(id);
             if (book == null) return false;
 
@@ -97,8 +104,7 @@ namespace Lib_System.Services
             book.Title = vm.Title;
             book.PublicationYear = vm.PublicationYear;
             book.Price = vm.Price;
-            if (book.AvailabilityStatus is not ("Reserved" or "Borrowed"))
-                book.AvailabilityStatus = vm.AvailabilityStatus;
+            book.AvailabilityStatus = vm.AvailabilityStatus;
             book.CategoryId = vm.CategoryId;
             book.ManagerId = vm.ManagerId;
 
@@ -118,6 +124,19 @@ namespace Lib_System.Services
 
             await _bookRepository.SaveChangesAsync();
             return true;
+        }
+
+        private async Task<string?> ValidateAvailabilityAsync(int id, string status)
+        {
+            if (status is not ("Available" or "Unavailable" or "Reserved" or "Borrowed"))
+                return "Select a valid availability status.";
+
+            var book = await _bookRepository.GetByIdWithBorrowingsAsync(id);
+            if (book != null && book.AvailabilityStatus != status &&
+                book.Borrowings.Any(b => b.Status is "Reserved" or "Borrowed" or "Early Return Requested"))
+                return "This book has an active reservation or borrowing. Complete the payment, expiry, or return process before changing its availability.";
+
+            return null;
         }
 
         public Task<bool> ExistsAsync(int id) => _bookRepository.ExistsAsync(id);

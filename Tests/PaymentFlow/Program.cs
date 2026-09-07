@@ -1,6 +1,8 @@
 using Lib_System.Data;
 using Lib_System.Models;
 using Lib_System.Repositories;
+using Lib_System.Services;
+using Lib_System.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 var databaseName = "LibSystemPaymentTests_" + Guid.NewGuid().ToString("N");
@@ -76,6 +78,30 @@ try
     }
     var competing = await Task.WhenAll(CompetingReservation(), CompetingReservation());
     Check(competing.Count(id => id.HasValue) == 1, "Concurrent requests reserve a book only once");
+    var bookService = new BookService(new BookRepository(db), new CategoryRepository(db), new AuthorRepository(db));
+    async Task<BookFormViewModel> EditModel(int id, string status)
+    {
+        var book = await db.Books.FindAsync(id);
+        return new BookFormViewModel
+        {
+            BookId = id, ISBN = book!.ISBN, Title = book.Title, Price = book.Price,
+            PublicationYear = 2026, CategoryId = book.CategoryId, AvailabilityStatus = status
+        };
+    }
+    var editableId = await Book();
+    Check(await bookService.UpdateAsync(editableId, await EditModel(editableId, "Borrowed")), "Manual status edit saves without an active borrowing");
+    Check(await bookService.UpdateAsync(editableId, await EditModel(editableId, "Available")), "Manually labelled Borrowed book can be made Available");
+    db.ChangeTracker.Clear();
+    Check((await db.Books.FindAsync(editableId))!.AvailabilityStatus == "Available", "Availability change persists in database");
+    try
+    {
+        await bookService.UpdateAsync(sharedBook, await EditModel(sharedBook, "Available"));
+        throw new Exception("Active reservation was overridden");
+    }
+    catch (InvalidOperationException)
+    {
+        Console.WriteLine("PASS: Active reservation blocks manual availability change with an error");
+    }
 }
 finally
 {
