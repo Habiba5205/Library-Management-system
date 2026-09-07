@@ -13,12 +13,13 @@ namespace Lib_System.Services
         private readonly IPaymentRepository _paymentRepository;
         private readonly PaymentWorkflowRepository _workflow;
         private readonly OverdueFineRepository _overdueFines;
+        private readonly FinePaymentRepository _finePayments;
 
         public BorrowingService(
             IBorrowingRepository borrowingRepository,
             IBookRepository bookRepository,
             IUserRepository userRepository,
-            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow, OverdueFineRepository overdueFines)
+            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow, OverdueFineRepository overdueFines, FinePaymentRepository finePayments)
         {
             _borrowingRepository = borrowingRepository;
             _bookRepository = bookRepository;
@@ -26,6 +27,7 @@ namespace Lib_System.Services
             _paymentRepository = paymentRepository;
             _workflow = workflow;
             _overdueFines = overdueFines;
+            _finePayments = finePayments;
         }
 
         public Task<List<Borrowing>> GetBorrowingsAsync(int? restrictToUserId, string? status)
@@ -64,36 +66,7 @@ namespace Lib_System.Services
             return _workflow.ReserveAsync(bookId, userId, paymentMethod);
         }
 
-        public async Task<ServiceResult> ReturnBorrowingAsync(int id)
-        {
-            var result = new ServiceResult();
-
-            var borrowing = await _borrowingRepository.GetForReturnAsync(id);
-            if (borrowing == null)
-            {
-                result.AddError("Borrowing not found.");
-                return result;
-            }
-
-            if (borrowing.Status is not ("Borrowed" or "Early Return Requested"))
-            {
-                result.AddError("Only an active borrowing can be returned.");
-                return result;
-            }
-
-            await _overdueFines.SynchronizeAsync();
-            borrowing.ReturnDate = DateTime.Today;
-            borrowing.Status = "Returned";
-
-            if (borrowing.Book != null)
-            {
-                borrowing.Book.AvailabilityStatus = "Available";
-            }
-
-            await _borrowingRepository.SaveChangesAsync();
-            await _overdueFines.SynchronizeAsync(id);
-            return result;
-        }
+        public Task<ServiceResult> ReturnBorrowingAsync(int id) => _finePayments.ReturnWithoutFineAsync(id);
 
         public async Task<ServiceResult> RequestEarlyReturnAsync(int id)
         {

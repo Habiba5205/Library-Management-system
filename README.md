@@ -19,10 +19,20 @@ previously recorded manual fines remain in the database.
 - Existing active overdue loans are included. Old completed loans without an
   automatic fine are not retroactively charged. Existing manual fines remain
   separate and unchanged.
-- Members see their own fines. Managers can mark an automatic fine Paid after
-  the book is returned, but cannot change its amount, reassign it, waive it, or
-  delete it.
+- Members see and pay only their own fines using Cash or the Development-only
+  demo card checkout. Unpaid fines block book returns.
+- Cash stays pending until the manager confirms receipt of cash and the book.
+  Successful card checkout settles automatically, with no manager action.
+- Fine payment and the book return are saved together once all fines for that
+  borrowing are settled. Failed or cancelled card attempts can be retried.
+- Fines continue to increase while payment is pending. If the amount changes,
+  the member must confirm it again. Cash fine payments have no 48-hour expiry.
+- Fine edit/delete endpoints are removed; manual edits cannot bypass payment.
+- Older outstanding manual fines must be settled before the automatic overdue
+  fine so the overdue amount continues to accrue until the actual return.
 - Apply the AddAutomaticOverdueFines migration before running the updated app.
+- The AddFinePayments migration stores the selected method, quoted amount,
+  current attempt identifier, payment status, and settlement time.
 
 ### Payment Flow
 

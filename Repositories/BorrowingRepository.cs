@@ -53,6 +53,7 @@ namespace Lib_System.Repositories
         public async Task<Borrowing?> GetForReturnAsync(int id)
         {
             return await _context.Borrowings
+                .Include(b => b.Fines)
                 .Include(b => b.Book)
                 .Include(b => b.User)
                 .FirstOrDefaultAsync(b => b.BorrowingId == id);

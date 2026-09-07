@@ -95,6 +95,9 @@ namespace Lib_System.Controllers
                 return Forbid();
             }
 
+            var unpaidFine = borrowing.Fines.OrderByDescending(f => f.FineId).FirstOrDefault(f => f.Status == "Unpaid");
+            if (unpaidFine != null)
+                return RedirectToAction("Details", "Fine", new { id = unpaidFine.FineId });
             return View(borrowing);
         }
 
@@ -121,7 +124,7 @@ namespace Lib_System.Controllers
                 {
                     ModelState.AddModelError(error.Field, error.Message);
                 }
-                return View("Return", borrowing);
+                return View("Return", await _borrowingService.GetReturnCandidateAsync(id));
             }
 
             return RedirectToAction(nameof(Details), new { id = borrowing.BorrowingId });

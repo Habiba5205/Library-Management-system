@@ -5,6 +5,8 @@ namespace Lib_System.Services.Interfaces
 {
     public interface IFineService
     {
+        Task<ServiceResult> StartPaymentAsync(int id, int memberId, string method, decimal amount);
+        Task<ServiceResult> CompletePaymentAsync(int id, int? memberId, string method, Guid attemptId, decimal amount, bool success);
         Task<List<Fine>> GetAllAsync(int? restrictToUserId, string? status);
         Task<Fine?> GetDetailsAsync(int id);
         Task<Fine?> GetForEditAsync(int id);

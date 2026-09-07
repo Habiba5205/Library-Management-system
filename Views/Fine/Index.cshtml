@@ -51,13 +51,13 @@
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.FineId" class="btn btn-sm btn-info">Details</a>
-                @if (User.IsInRole("Manager"))
+                @if (item.Status == "Unpaid" && User.IsInRole("Member"))
                 {
-                <a asp-action="Edit" asp-route-id="@item.FineId" class="btn btn-sm btn-warning">Edit</a>
-                @if (!item.IsAutomatic)
-                {
-                    <a asp-action="Delete" asp-route-id="@item.FineId" class="btn btn-sm btn-danger">Delete</a>
+                    <a asp-action="Details" asp-route-id="@item.FineId" class="btn btn-sm btn-primary">Pay Fine</a>
                 }
+                @if (item.Status == "Unpaid" && item.PaymentMethod == "Cash" && item.PaymentStatus == "Pending" && User.IsInRole("Manager"))
+                {
+                    <a asp-action="Details" asp-route-id="@item.FineId" class="btn btn-sm btn-warning">Review Cash Payment</a>
                 }
             </td>
         </tr>

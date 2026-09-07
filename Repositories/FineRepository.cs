@@ -47,6 +47,8 @@ namespace Lib_System.Repositories
         {
             return await _context.Fines
                 .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.Fines)
+                .Include(f => f.Borrowing)
                     .ThenInclude(b => b!.Book)
                 .Include(f => f.Borrowing)
                     .ThenInclude(b => b!.User)

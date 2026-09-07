@@ -11,6 +11,12 @@ public class OverdueFineRepository(ApplicationDbContext db, TimeProvider clock)
     public async Task SynchronizeAsync(int? returnedBorrowingId = null)
     {
         await using var transaction = await db.Database.BeginTransactionAsync();
+        await SynchronizeInTransactionAsync(returnedBorrowingId);
+        await transaction.CommitAsync();
+    }
+
+    public async Task SynchronizeInTransactionAsync(int? returnedBorrowingId = null)
+    {
         // A database lock coordinates the worker and concurrent web requests.
         await db.Database.ExecuteSqlRawAsync("""
             DECLARE @result int;
@@ -45,6 +51,5 @@ public class OverdueFineRepository(ApplicationDbContext db, TimeProvider clock)
                 fine.Amount = days * DailyRate;
         }
         await db.SaveChangesAsync();
-        await transaction.CommitAsync();
     }
 }

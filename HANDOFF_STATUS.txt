@@ -1,5 +1,16 @@
 Library Management System MVC - Handoff Status
 
+FINE PAYMENT AND RETURN UPDATE
+- Supersedes the earlier pay-after-return rule: unpaid fines now block returns.
+- Members select Cash or Card for their own fines.
+- Cash confirmation records receipt of cash and book; demo Card success settles
+  automatically. Settling the last fine also returns the book atomically.
+- Fine amount is checked again at completion; increases require member
+  confirmation. Failed/cancelled card attempts leave the fine unpaid.
+- Cash fine payment has no reservation expiry.
+- Fine edit and delete routes removed to prevent payment bypass.
+- AddFinePayments migration required.
+
 AUTOMATIC FINES - 2026-09-07
 - Manual fine creation and Add Fine shortcuts have been removed. Existing
   manual fine records are preserved.

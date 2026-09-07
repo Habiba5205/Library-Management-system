@@ -164,13 +164,14 @@ try
     clock.Advance(TimeSpan.FromDays(2));
     await overdueFines.SynchronizeAsync();
     Check(automatic.Amount == 25 && await db.Fines.CountAsync(f => f.BorrowingId == overdue.BorrowingId && f.IsAutomatic) == 1, "Catch-up increases one fine without duplication");
-    var fineService = new FineService(new FineRepository(db), new BorrowingRepository(db));
+    var finePayments = new FinePaymentRepository(db, overdueFines, clock);
+    var fineService = new FineService(new FineRepository(db), new BorrowingRepository(db), finePayments);
     try
     {
         await fineService.UpdateAsync(automatic.FineId, new FineFormViewModel { Status = "Paid" });
         throw new Exception("Unreturned book fine accepted as paid");
     }
-    catch (InvalidOperationException) { Console.WriteLine("PASS: Automatic fine cannot be paid before return"); }
+    catch (InvalidOperationException) { Console.WriteLine("PASS: Manual edit cannot bypass fine payment"); }
     overdue.Status = "Returned";
     overdue.ReturnDate = clock.GetLocalNow().Date;
     await db.SaveChangesAsync();
@@ -178,8 +179,14 @@ try
     clock.Advance(TimeSpan.FromDays(4));
     await overdueFines.SynchronizeAsync();
     Check(automatic.Amount == 25, "Returned book fine stops growing");
-    Check(await fineService.UpdateAsync(automatic.FineId, new FineFormViewModel { Status = "Paid", Amount = 1 }), "Manager can settle returned book fine");
-    Check(automatic.Status == "Paid" && automatic.Amount == 25, "Automatic amount cannot be overridden");
+    Check((await finePayments.StartAsync(manual.FineId, member.UserId, "Cash", 7)).Success, "Existing manual fines can use the payment flow");
+    var manualPayment = await db.Fines.FindAsync(manual.FineId);
+    Check((await finePayments.CompleteAsync(manual.FineId, null, "Cash", manualPayment!.PaymentAttemptId!.Value, 7, true)).Success, "Existing manual fine cash settlement");
+    Check((await finePayments.StartAsync(automatic.FineId, member.UserId, "Cash", 25)).Success, "Cash selection records the confirmed fine amount");
+    automatic = (await db.Fines.FindAsync(automatic.FineId))!;
+    Check((await finePayments.CompleteAsync(automatic.FineId, null, "Cash", automatic.PaymentAttemptId!.Value, 25, true)).Success, "Manager can settle cash fine through payment flow");
+    automatic = (await db.Fines.FindAsync(automatic.FineId))!;
+    Check(automatic.Status == "Paid" && automatic.Amount == 25, "Payment preserves calculated fine amount");
     try
     {
         await fineService.DeleteAsync(automatic.FineId);
@@ -194,6 +201,63 @@ try
     }
     await Task.WhenAll(RefreshFines(), RefreshFines());
     Check(await db.Fines.CountAsync(f => f.BorrowingId == concurrentLoan.BorrowingId && f.IsAutomatic) == 1, "Concurrent checks create only one automatic fine");
+    async Task<Fine> NewOverdueFine()
+    {
+        var loan = await Loan("Borrowed", 2);
+        var book = await db.Books.FindAsync(loan.BookId);
+        book!.AvailabilityStatus = "Borrowed";
+        await db.SaveChangesAsync();
+        await overdueFines.SynchronizeAsync();
+        return await db.Fines.SingleAsync(f => f.BorrowingId == loan.BorrowingId && f.IsAutomatic);
+    }
+    async Task<Fine> ReloadFine(int id)
+    {
+        db.ChangeTracker.Clear();
+        return await db.Fines.Include(f => f.Borrowing).ThenInclude(b => b!.Book).SingleAsync(f => f.FineId == id);
+    }
+    var cashFine = await NewOverdueFine();
+    Check(!(await finePayments.ReturnWithoutFineAsync(cashFine.BorrowingId)).Success, "Unpaid fine blocks direct return");
+    Check(!(await finePayments.StartAsync(cashFine.FineId, member.UserId + 1, "Cash", 10)).Success, "Another member cannot select fine payment");
+    Check((await finePayments.StartAsync(cashFine.FineId, member.UserId, "Cash", 10)).Success, "Member requests cash fine payment");
+    cashFine = await ReloadFine(cashFine.FineId);
+    Check(cashFine.Status == "Unpaid" && cashFine.Borrowing!.Status == "Borrowed", "Cash selection does not settle or return");
+    var cashAttempt = cashFine.PaymentAttemptId!.Value;
+    Check((await finePayments.CompleteAsync(cashFine.FineId, null, "Cash", cashAttempt, 10, true)).Success, "Cash confirmation succeeds");
+    cashFine = await ReloadFine(cashFine.FineId);
+    Check(cashFine.Status == "Paid" && cashFine.Borrowing!.Status == "Returned" && cashFine.Borrowing.Book!.AvailabilityStatus == "Available", "Cash payment and return complete together");
+    var returnedAt = cashFine.Borrowing!.ReturnDate;
+    Check((await finePayments.CompleteAsync(cashFine.FineId, null, "Cash", cashAttempt, 10, true)).Success &&
+        (await ReloadFine(cashFine.FineId)).Borrowing!.ReturnDate == returnedAt, "Duplicate fine confirmation is harmless");
+    var cardFine = await NewOverdueFine();
+    await finePayments.StartAsync(cardFine.FineId, member.UserId, "Card", 10);
+    cardFine = await ReloadFine(cardFine.FineId);
+    var cardAttempt = cardFine.PaymentAttemptId!.Value;
+    Check(!(await finePayments.CompleteAsync(cardFine.FineId, null, "Cash", cardAttempt, 10, true)).Success, "Manager cash endpoint cannot settle card fine");
+    Check(!(await finePayments.CompleteAsync(cardFine.FineId, member.UserId + 1, "Card", cardAttempt, 10, true)).Success, "Another member cannot settle fine");
+    Check((await finePayments.CompleteAsync(cardFine.FineId, member.UserId, "Card", cardAttempt, 10, false)).Success, "Card failure or cancellation accepted");
+    cardFine = await ReloadFine(cardFine.FineId);
+    Check(cardFine.Status == "Unpaid" && cardFine.Borrowing!.Status == "Borrowed", "Card failure leaves fine unpaid and book borrowed");
+    await finePayments.StartAsync(cardFine.FineId, member.UserId, "Card", 10);
+    cardFine = await ReloadFine(cardFine.FineId);
+    Check(!(await finePayments.CompleteAsync(cardFine.FineId, member.UserId, "Card", cardAttempt, 10, true)).Success, "Superseded payment cannot be completed");
+    cardAttempt = cardFine.PaymentAttemptId!.Value;
+    clock.Advance(TimeSpan.FromDays(1));
+    Check(!(await finePayments.CompleteAsync(cardFine.FineId, member.UserId, "Card", cardAttempt, 10, true)).Success, "Fine increase rejects old amount");
+    cardFine = await ReloadFine(cardFine.FineId);
+    Check(cardFine.Amount == 15 && cardFine.Status == "Unpaid" && cardFine.Borrowing!.Status == "Borrowed", "Stale payment does not return book");
+    await finePayments.StartAsync(cardFine.FineId, member.UserId, "Card", 15);
+    cardFine = await ReloadFine(cardFine.FineId);
+    Check((await finePayments.CompleteAsync(cardFine.FineId, member.UserId, "Card", cardFine.PaymentAttemptId!.Value, 15, true)).Success, "Card succeeds after confirming updated amount");
+    cardFine = await ReloadFine(cardFine.FineId);
+    Check(cardFine.Status == "Paid" && cardFine.Borrowing!.Status == "Returned" && cardFine.Borrowing.Book!.AvailabilityStatus == "Available", "Card payment automatically returns book");
+    var staleCash = await NewOverdueFine();
+    await finePayments.StartAsync(staleCash.FineId, member.UserId, "Cash", 10);
+    staleCash = await ReloadFine(staleCash.FineId);
+    var staleCashAttempt = staleCash.PaymentAttemptId!.Value;
+    clock.Advance(TimeSpan.FromDays(1));
+    Check(!(await finePayments.CompleteAsync(staleCash.FineId, null, "Cash", staleCashAttempt, 15, true)).Success, "Manager cannot accept increased amount without member reconfirmation");
+    var noFineLoan = await Loan("Borrowed", 0);
+    Check((await finePayments.ReturnWithoutFineAsync(noFineLoan.BorrowingId)).Success, "No-fine return still succeeds");
     var dashboardRepository = new DashboardRepository(db);
     var memberDashboard = await dashboardRepository.GetDashboardAsync(true, member.UserId);
     var staffDashboard = await dashboardRepository.GetDashboardAsync(false, member.UserId);

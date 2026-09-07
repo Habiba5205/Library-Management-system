@@ -5,6 +5,10 @@
 }
 
 <h1>Fine Details</h1>
+@if (TempData["FineMessage"] is string message)
+{
+    <p class="alert alert-info">@message</p>
+}
 
 <div>
     <dl class="row">
@@ -36,10 +40,37 @@
 </div>
 
 <div class="mt-3">
-    @if (User.IsInRole("Manager"))
+    @foreach (var other in Model.Borrowing!.Fines.Where(f => f.FineId != Model.FineId && f.Status == "Unpaid").OrderByDescending(f => f.FineId))
     {
-    <a asp-action="Edit" asp-route-id="@Model.FineId" class="btn btn-warning">Edit</a>
+        <p><a asp-action="Details" asp-route-id="@other.FineId">Other outstanding fine: @other.Amount.ToString("0.00") EGP</a></p>
+    }
+    @if (Model.Status == "Unpaid" && User.IsInRole("Member"))
+    {
+        <p>Outstanding fine: <strong>@Model.Amount.ToString("0.00") EGP</strong>. Payment is required before returning the book.</p>
+        <form asp-action="Pay" method="post" class="mb-3">
+            <input type="hidden" name="id" value="@Model.FineId" />
+            <input type="hidden" name="amount" value="@Model.Amount" />
+            <label for="fine-method" class="form-label">Payment Method</label>
+            <select id="fine-method" name="method" class="form-select mb-2" required>
+                <option value="">Select payment method</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card (demo)</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Confirm Amount and Continue</button>
+        </form>
+    }
+    @if (Model.Status == "Unpaid" && Model.PaymentStatus == "Pending" && Model.PaymentMethod == "Cash")
+    {
+        <p class="alert alert-info">Cash payment pending manager confirmation.</p>
+        @if (User.IsInRole("Manager"))
+        {
+            <form asp-action="ConfirmCash" method="post" class="mb-3">
+                <input type="hidden" name="id" value="@Model.FineId" />
+                <input type="hidden" name="attemptId" value="@Model.PaymentAttemptId" />
+                <input type="hidden" name="amount" value="@Model.Amount" />
+                <button class="btn btn-success" type="submit">Confirm Cash and Book Received</button>
+            </form>
+        }
     }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
-

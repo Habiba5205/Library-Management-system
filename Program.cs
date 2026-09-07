@@ -17,6 +17,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<PaymentWorkflowRepository>();
 builder.Services.AddScoped<OverdueFineRepository>();
+builder.Services.AddScoped<FinePaymentRepository>();
 builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

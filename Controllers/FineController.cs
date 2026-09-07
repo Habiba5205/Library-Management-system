@@ -1,169 +1,75 @@
+using Lib_System.Services;
 using Lib_System.Services.Interfaces;
-using Lib_System.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace Lib_System.Controllers
+namespace Lib_System.Controllers;
+
+[Authorize(Roles = "Admin,Manager,Member")]
+public class FineController(IFineService fines, IWebHostEnvironment environment) : Controller
 {
-    public class FineController : Controller
+    public async Task<IActionResult> Index(string? status)
     {
-        private readonly IFineService _fineService;
-
-        public FineController(IFineService fineService)
-        {
-            _fineService = fineService;
-        }
-
-        [Authorize(Roles = "Admin,Manager,Member")]
-        public async Task<IActionResult> Index(string? status)
-        {
-            int? restrictToUserId = User.IsInRole("Member") ? GetCurrentUserId() : null;
-            var fines = await _fineService.GetAllAsync(restrictToUserId, status);
-
-            ViewBag.Status = status;
-            return View(fines);
-        }
-
-        [Authorize(Roles = "Admin,Manager,Member")]
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var fine = await _fineService.GetDetailsAsync(id.Value);
-            if (fine == null) return NotFound();
-
-            if (User.IsInRole("Member") && fine.Borrowing?.UserId != GetCurrentUserId())
-            {
-                return Forbid();
-            }
-
-            return View(fine);
-        }
-
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var fine = await _fineService.GetForEditAsync(id.Value);
-            if (fine == null) return NotFound();
-
-            var vm = new FineFormViewModel
-            {
-                FineId = fine.FineId,
-                IsAutomatic = fine.IsAutomatic,
-                BorrowingId = fine.BorrowingId,
-                Amount = fine.Amount,
-                FineDate = fine.FineDate,
-                Reason = fine.Reason,
-                Status = fine.Status
-            };
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Edit(int id, FineFormViewModel vm)
-        {
-            if (id != vm.FineId) return NotFound();
-
-            var storedFine = await _fineService.GetForEditAsync(id);
-            if (storedFine == null) return NotFound();
-            vm.IsAutomatic = storedFine.IsAutomatic;
-            if (storedFine.IsAutomatic)
-            {
-                vm.BorrowingId = storedFine.BorrowingId;
-                vm.Amount = storedFine.Amount;
-                vm.FineDate = storedFine.FineDate;
-                vm.Reason = storedFine.Reason;
-                foreach (var field in new[] { nameof(vm.BorrowingId), nameof(vm.Amount), nameof(vm.FineDate), nameof(vm.Reason) })
-                    ModelState.Remove(field);
-            }
-
-            var validation = await _fineService.ValidateBorrowingAsync(vm.BorrowingId);
-            foreach (var error in validation.Errors)
-            {
-                ModelState.AddModelError(error.Field, error.Message);
-            }
-
-            if (ModelState.IsValid)
-            {
-                bool updated;
-                try
-                {
-                    updated = await _fineService.UpdateAsync(id, vm);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    ModelState.AddModelError("", ex.Message);
-                    await PopulateBorrowingsAsync(vm);
-                    return View(vm);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!await _fineService.ExistsAsync(id)) return NotFound();
-                    else throw;
-                }
-
-                if (!updated) return NotFound();
-                return RedirectToAction(nameof(Index));
-            }
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var fine = await _fineService.GetForDeleteAsync(id.Value);
-            if (fine == null) return NotFound();
-
-            return View(fine);
-        }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                await _fineService.DeleteAsync(id);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("", ex.Message);
-                return View("Delete", await _fineService.GetForDeleteAsync(id));
-            }
-            return RedirectToAction(nameof(Index));
-        }
-
-        private async Task PopulateBorrowingsAsync(FineFormViewModel vm)
-        {
-            var borrowings = await _fineService.GetBorrowingsForDropdownAsync();
-
-            vm.Borrowings = new SelectList(
-                borrowings.Select(b => new
-                {
-                    b.BorrowingId,
-                    Label = $"#{b.BorrowingId} - {b.Book?.Title ?? "Unknown book"} / {b.User?.Name ?? "Unknown member"}"
-                }),
-                "BorrowingId", "Label", vm.BorrowingId);
-        }
-
-        private int GetCurrentUserId()
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(value, out var userId) ? userId : 0;
-        }
+        ViewBag.Status = status;
+        return View(await fines.GetAllAsync(User.IsInRole("Member") ? CurrentUserId() : null, status));
     }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var fine = await fines.GetDetailsAsync(id);
+        if (fine == null) return NotFound();
+        if (User.IsInRole("Member") && fine.Borrowing?.UserId != CurrentUserId()) return Forbid();
+        return View(fine);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Member")]
+    public async Task<IActionResult> Pay(int id, string method, decimal amount)
+    {
+        if (method == "Card" && !environment.IsDevelopment()) return NotFound();
+        var result = await fines.StartPaymentAsync(id, CurrentUserId(), method, amount);
+        if (!result.Success)
+        {
+            SetMessage(result);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        if (method == "Cash") TempData["FineMessage"] = "Pay the manager in person and hand over the book. Your fine remains unpaid until confirmation.";
+        return RedirectToAction(method == "Card" ? nameof(Checkout) : nameof(Details), new { id });
+    }
+
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> Checkout(int id)
+    {
+        if (!environment.IsDevelopment()) return NotFound();
+        var fine = await fines.GetDetailsAsync(id);
+        if (fine == null) return NotFound();
+        if (fine.Borrowing?.UserId != CurrentUserId()) return Forbid();
+        if (fine.Status != "Unpaid" || fine.PaymentMethod != "Card" || fine.PaymentStatus != "Pending")
+            return RedirectToAction(nameof(Details), new { id });
+        return View(fine);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Member")]
+    public async Task<IActionResult> DemoResult(int id, Guid attemptId, decimal amount, string outcome)
+    {
+        if (!environment.IsDevelopment()) return NotFound();
+        if (outcome is not ("success" or "failure" or "cancel")) return BadRequest();
+        var result = await fines.CompletePaymentAsync(id, CurrentUserId(), "Card", attemptId, amount, outcome == "success");
+        SetMessage(result, outcome == "success" ? "Demo payment completed. The book is returned once all its fines are paid."
+            : "Payment was not completed. The fine is still unpaid and you can retry.");
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Manager")]
+    public async Task<IActionResult> ConfirmCash(int id, Guid attemptId, decimal amount)
+    {
+        SetMessage(await fines.CompletePaymentAsync(id, null, "Cash", attemptId, amount, true),
+            "Cash received. The book is returned once all its fines are paid.");
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    private void SetMessage(ServiceResult result, string success = "") =>
+        TempData["FineMessage"] = result.Success ? success : string.Join(" ", result.Errors.Select(e => e.Message));
+
+    private int CurrentUserId() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }
