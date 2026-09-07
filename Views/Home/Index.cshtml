@@ -27,11 +27,14 @@
         <strong>@Model.BookCount</strong>
         <small>@Model.AvailableBookCount available</small>
     </div>
-    <div class="summary-card">
-        <span class="summary-label">Members</span>
-        <strong>@Model.MemberCount</strong>
-        <small>registered members</small>
-    </div>
+    @if (!User.IsInRole("Member"))
+    {
+        <div class="summary-card">
+            <span class="summary-label">Members</span>
+            <strong>@Model.MemberCount</strong>
+            <small>registered members</small>
+        </div>
+    }
     <div class="summary-card">
         <span class="summary-label">Active Borrowings</span>
         <strong>@Model.ActiveBorrowingCount</strong>
