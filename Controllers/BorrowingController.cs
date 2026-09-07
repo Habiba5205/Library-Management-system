@@ -42,13 +42,13 @@ namespace Lib_System.Controllers
             return View(borrowing);
         }
 
-        [Authorize(Roles = "Manager,Member")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> Create(int? bookId)
         {
             var vm = new BorrowingFormViewModel();
 
             if (bookId.HasValue) vm.BookId = bookId.Value;
-            if (User.IsInRole("Member")) vm.UserId = GetCurrentUserId();
+            vm.UserId = GetCurrentUserId();
 
             await PopulateDropdownsAsync(vm);
             return View(vm);
@@ -56,10 +56,11 @@ namespace Lib_System.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager,Member")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> Create(BorrowingFormViewModel vm)
         {
-            if (User.IsInRole("Member")) vm.UserId = GetCurrentUserId();
+            // Always the logged-in member - never trust a UserId posted from the form.
+            vm.UserId = GetCurrentUserId();
 
             var validation = await _borrowingService.ValidateForCreateAsync(vm.BookId, vm.UserId);
             foreach (var error in validation.Errors)
@@ -126,10 +127,6 @@ namespace Lib_System.Controllers
         {
             var availableBooks = await _borrowingService.GetAvailableBooksAsync();
             vm.Books = new SelectList(availableBooks, "BookId", "Title", vm.BookId);
-
-            int? restrictToUserId = User.IsInRole("Member") ? GetCurrentUserId() : null;
-            var members = await _borrowingService.GetMembersAsync(restrictToUserId);
-            vm.Members = new SelectList(members, "UserId", "Name", vm.UserId);
         }
 
         private int GetCurrentUserId()

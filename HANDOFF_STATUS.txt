@@ -159,6 +159,23 @@ dotnet build Lib_System.csproj
 Next step:
 Optional: add authentication/login and role-based access.
 
+Recent changes:
+- BorrowingController: added role-based [Authorize] attributes on Index, Details,
+  Create, Return and ReturnConfirmed to restrict access to Admin/Manager/Member as
+  appropriate. Members are further restricted to operate only on their own
+  borrowings.
+- Return flow: ReturnConfirmed now invokes the service to mark a borrowing as
+  returned and redirects to the Borrowing Details page after a successful
+  return. Validation errors surface on the Return view when the service reports
+  issues.
+- Create flow: Create action validates availability and user eligibility via
+  IBorrowingService.ValidateForCreateAsync and uses BorrowingFormViewModel for
+  dropdown binding; members will have their UserId pre-filled.
+- Utility: PopulateDropdownsAsync loads available books and scoped members; a
+  helper GetCurrentUserId() centralizes parsing the current user's id from the
+  ClaimsPrincipal.
+
+
 Authentication/login status:
 - Cookie authentication is implemented.
 - Login and logout are implemented through AccountController.

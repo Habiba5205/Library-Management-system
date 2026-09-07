@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Lib_System.Controllers
 {
@@ -61,6 +62,9 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(BookFormViewModel vm)
         {
+            // Always the logged-in manager - never trust a ManagerId posted from the form.
+            vm.ManagerId = GetCurrentUserId();
+
             var validation = await _bookService.ValidateForCreateAsync(vm);
             foreach (var error in validation.Errors)
             {
@@ -95,6 +99,7 @@ namespace Lib_System.Controllers
                 AvailabilityStatus = book.AvailabilityStatus,
                 CategoryId = book.CategoryId,
                 ManagerId = book.ManagerId,
+                ManagerName = book.Manager?.Name ?? "Unassigned",
                 SelectedAuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList()
             };
 
@@ -173,10 +178,13 @@ namespace Lib_System.Controllers
             var categories = await _bookService.GetCategoriesAsync();
             vm.Categories = new SelectList(categories, "CategoryId", "Name", vm.CategoryId);
 
-            var managers = await _bookService.GetManagersAsync();
-            vm.Managers = new SelectList(managers, "UserId", "Name", vm.ManagerId);
-
             vm.AllAuthors = await _bookService.GetAllAuthorsAsync();
+        }
+
+        private int GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(value, out var userId) ? userId : 0;
         }
     }
 }

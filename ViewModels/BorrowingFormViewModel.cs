@@ -22,8 +22,5 @@ namespace Lib_System.ViewModels
         public int LoanDays { get; set; } = 14;
 
         public SelectList? Books { get; set; }
-
-        public SelectList? Members { get; set; }
     }
 }
-

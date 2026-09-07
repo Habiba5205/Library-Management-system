@@ -6,11 +6,11 @@
 
 <h1>Borrowings</h1>
 
-@if (User.IsInRole("Manager") || User.IsInRole("Member"))
+@if (User.IsInRole("Member"))
 {
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Borrow Book</a>
-</p>
+    <p>
+        <a asp-action="Create" class="btn btn-primary">+ Borrow Book</a>
+    </p>
 }
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
@@ -41,34 +41,34 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model)
-{
-        <tr>
-            <td>@(item.Book?.Title ?? "-")</td>
-            <td>@(item.User?.Name ?? "-")</td>
-            <td>@item.BorrowDate.ToString("yyyy-MM-dd")</td>
-            <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
-            <td>@(item.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
-            <td>
-                <span class="badge bg-@(item.Status == "Borrowed" ? "warning" : item.Status == "Early Return Requested" ? "info" : "success")">
-                    @item.Status
-                </span>
-            </td>
-            <td>
-                <a asp-action="Details" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-info">Details</a>
-                @if (item.Status != "Returned" && User.IsInRole("Manager"))
-                {
-                    <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">Return</a>
-                }
-                else if (item.Status == "Borrowed" && User.IsInRole("Member"))
-                {
-                    var isEarlyReturn = DateTime.Today < item.DueDate.Date;
-                    <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">
-                        @(isEarlyReturn ? "Request Early Return" : "Return")
-                    </a>
-                }
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(item.Book?.Title ?? "-")</td>
+                <td>@(item.User?.Name ?? "-")</td>
+                <td>@item.BorrowDate.ToString("yyyy-MM-dd")</td>
+                <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
+                <td>@(item.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                <td>
+                    <span class="badge bg-@(item.Status == "Borrowed" ? "warning" : item.Status == "Early Return Requested" ? "info" : "success")">
+                        @item.Status
+                    </span>
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-info">Details</a>
+                    @if (item.Status != "Returned" && User.IsInRole("Manager"))
+                    {
+                        <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">Return</a>
+                    }
+                    else if (item.Status == "Borrowed" && User.IsInRole("Member"))
+                    {
+                        var isEarlyReturn = DateTime.Today < item.DueDate.Date;
+                        <a asp-action="Return" asp-route-id="@item.BorrowingId" class="btn btn-sm btn-success">
+                            @(isEarlyReturn ? "Request Early Return" : "Return")
+                        </a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

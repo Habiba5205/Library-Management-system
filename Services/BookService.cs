@@ -10,18 +10,15 @@ namespace Lib_System.Services
         private readonly IBookRepository _bookRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IAuthorRepository _authorRepository;
-        private readonly IUserRepository _userRepository;
 
         public BookService(
             IBookRepository bookRepository,
             ICategoryRepository categoryRepository,
-            IAuthorRepository authorRepository,
-            IUserRepository userRepository)
+            IAuthorRepository authorRepository)
         {
             _bookRepository = bookRepository;
             _categoryRepository = categoryRepository;
             _authorRepository = authorRepository;
-            _userRepository = userRepository;
         }
 
         public Task<List<Book>> GetAllAsync(string? searchString, int? categoryId, int? authorId, bool memberRestrictToAvailable)
@@ -144,8 +141,6 @@ namespace Lib_System.Services
         }
 
         public Task<List<Category>> GetCategoriesAsync() => _categoryRepository.GetAllAsync();
-
-        public Task<List<User>> GetManagersAsync() => _userRepository.GetManagersAsync();
 
         public Task<List<Author>> GetAllAuthorsAsync() => _authorRepository.GetAllAsync();
     }

@@ -36,13 +36,17 @@ namespace Lib_System.ViewModels
         [Display(Name = "Manager")]
         public int? ManagerId { get; set; }
 
+        // Display-only, populated by the controller from the book's current manager.
+        // Not editable - ManagerId is always set server-side (the logged-in manager
+        // on Create, left unchanged on Edit).
+        public string? ManagerName { get; set; }
+
         [Display(Name = "Authors")]
         public List<int> SelectedAuthorIds { get; set; } = new();
 
         // Populated by the controller to build the form's dropdowns/checkboxes.
         // Not posted back from the browser.
         public SelectList? Categories { get; set; }
-        public SelectList? Managers { get; set; }
         public List<Author> AllAuthors { get; set; } = new();
     }
 }

@@ -64,6 +64,7 @@ namespace Lib_System.Repositories
         {
             return await _context.Books
                 .Include(b => b.BookAuthors)
+                .Include(b => b.Manager)
                 .FirstOrDefaultAsync(b => b.BookId == id);
         }
 

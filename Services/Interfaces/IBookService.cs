@@ -25,7 +25,6 @@ namespace Lib_System.Services.Interfaces
         Task<ServiceResult> DeleteAsync(int id);
 
         Task<List<Category>> GetCategoriesAsync();
-        Task<List<User>> GetManagersAsync();
         Task<List<Author>> GetAllAuthorsAsync();
     }
 }

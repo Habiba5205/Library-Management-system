@@ -149,7 +149,5 @@ namespace Lib_System.Services
         }
 
         public Task<List<Book>> GetAvailableBooksAsync() => _bookRepository.GetAvailableBooksAsync();
-
-        public Task<List<User>> GetMembersAsync(int? restrictToUserId) => _userRepository.GetMembersAsync(restrictToUserId);
     }
 }

@@ -16,6 +16,5 @@ namespace Lib_System.Services.Interfaces
         Task<ServiceResult> ReturnBorrowingAsync(int id);
 
         Task<List<Book>> GetAvailableBooksAsync();
-        Task<List<User>> GetMembersAsync(int? restrictToUserId);
     }
 }
