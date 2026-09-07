@@ -70,7 +70,7 @@ namespace Lib_System.Controllers
 
             if (ModelState.IsValid)
             {
-                await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.BorrowDate, vm.LoanDays);
+                await _borrowingService.CreateAsync(vm.BookId, vm.UserId, vm.BorrowDate, vm.LoanDays, vm.PaymentMethod);
                 return RedirectToAction(nameof(Index));
             }
 

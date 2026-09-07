@@ -44,37 +44,6 @@ namespace Lib_System.Controllers
         }
 
         [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create(int? borrowingId)
-        {
-            var vm = new PaymentFormViewModel();
-            if (borrowingId.HasValue) vm.BorrowingId = borrowingId.Value;
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create(PaymentFormViewModel vm)
-        {
-            var validation = await _paymentService.ValidateBorrowingAsync(vm.BorrowingId);
-            foreach (var error in validation.Errors)
-            {
-                ModelState.AddModelError(error.Field, error.Message);
-            }
-
-            if (ModelState.IsValid)
-            {
-                await _paymentService.CreateAsync(vm);
-                return RedirectToAction(nameof(Index));
-            }
-
-            await PopulateBorrowingsAsync(vm);
-            return View(vm);
-        }
-
-        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -103,6 +72,14 @@ namespace Lib_System.Controllers
         public async Task<IActionResult> Edit(int id, PaymentFormViewModel vm)
         {
             if (id != vm.PaymentId) return NotFound();
+
+            var payment = await _paymentService.GetForEditAsync(id);
+            if (payment == null) return NotFound();
+
+            vm.PaymentMethod = payment.PaymentMethod;
+            vm.BorrowingId = payment.BorrowingId;
+            ModelState.Remove(nameof(vm.PaymentMethod));
+            ModelState.Remove(nameof(vm.BorrowingId));
 
             var validation = await _paymentService.ValidateBorrowingAsync(vm.BorrowingId);
             foreach (var error in validation.Errors)

@@ -54,8 +54,13 @@ namespace Lib_System.Services
             return result;
         }
 
-        public async Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays)
+        public async Task CreateAsync(int bookId, int userId, DateTime borrowDate, int loanDays, string paymentMethod)
         {
+            if (paymentMethod is not ("Cash" or "Card" or "Bank Transfer" or "Mobile Wallet"))
+            {
+                throw new ArgumentException("Select a valid payment method.", nameof(paymentMethod));
+            }
+
             var book = await _bookRepository.GetByIdAsync(bookId);
 
             var borrowing = new Borrowing
@@ -78,7 +83,7 @@ namespace Lib_System.Services
                 Borrowing = borrowing,
                 Amount = book?.Price ?? 0,
                 PaymentDate = borrowDate,
-                PaymentMethod = "Not selected",
+                PaymentMethod = paymentMethod,
                 Status = "Pending"
             });
             await _borrowingRepository.SaveChangesAsync();

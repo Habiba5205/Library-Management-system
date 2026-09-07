@@ -21,6 +21,11 @@ namespace Lib_System.ViewModels
         [Display(Name = "Loan Days")]
         public int LoanDays { get; set; } = 14;
 
+        [Required]
+        [AllowedValues("Cash", "Card", "Bank Transfer", "Mobile Wallet", ErrorMessage = "Select a valid payment method.")]
+        [Display(Name = "Payment Method")]
+        public string PaymentMethod { get; set; } = string.Empty;
+
         public SelectList? Books { get; set; }
     }
 }

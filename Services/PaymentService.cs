@@ -60,10 +60,8 @@ namespace Lib_System.Services
             var payment = await _paymentRepository.GetByIdAsync(id);
             if (payment == null) return false;
 
-            payment.BorrowingId = vm.BorrowingId;
             payment.Amount = vm.Amount;
             payment.PaymentDate = vm.PaymentDate;
-            payment.PaymentMethod = vm.PaymentMethod;
             payment.Status = vm.Status;
             payment.TransactionReference = vm.TransactionReference;
 
