@@ -1,11 +1,12 @@
 using System.Data;
 using Lib_System.Data;
 using Lib_System.Models;
+using Lib_System.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lib_System.Repositories;
+namespace Lib_System.Services;
 
-public class PaymentWorkflowRepository(ApplicationDbContext db, TimeProvider clock)
+public class PaymentWorkflowService(ApplicationDbContext db, TimeProvider clock) : IPaymentWorkflowService
 {
     public async Task<int?> ReserveAsync(int bookId, int userId, string method)
     {

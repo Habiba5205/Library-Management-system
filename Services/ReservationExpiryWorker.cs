@@ -1,4 +1,4 @@
-using Lib_System.Repositories;
+using Lib_System.Services.Interfaces;
 
 namespace Lib_System.Services;
 
@@ -13,8 +13,8 @@ public class ReservationExpiryWorker(IServiceScopeFactory scopes, ILogger<Reserv
             try
             {
                 using var scope = scopes.CreateScope();
-                await scope.ServiceProvider.GetRequiredService<PaymentWorkflowRepository>().ExpireAsync();
-                await scope.ServiceProvider.GetRequiredService<OverdueFineRepository>().SynchronizeAsync();
+                await scope.ServiceProvider.GetRequiredService<IPaymentWorkflowService>().ExpireAsync();
+                await scope.ServiceProvider.GetRequiredService<IOverdueFineService>().SynchronizeAsync();
             }
             catch (Exception ex)
             {

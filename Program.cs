@@ -15,9 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddScoped<PaymentWorkflowRepository>();
-builder.Services.AddScoped<OverdueFineRepository>();
-builder.Services.AddScoped<FinePaymentRepository>();
+builder.Services.AddScoped<IPaymentWorkflowService, PaymentWorkflowService>();
+builder.Services.AddScoped<IOverdueFineService, OverdueFineService>();
+builder.Services.AddScoped<IFinePaymentService, FinePaymentService>();
 builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -110,8 +110,8 @@ app.Use(async (context, next) =>
         !context.Request.Path.StartsWithSegments("/js") &&
         !context.Request.Path.StartsWithSegments("/lib"))
     {
-        await context.RequestServices.GetRequiredService<PaymentWorkflowRepository>().ExpireAsync();
-        await context.RequestServices.GetRequiredService<OverdueFineRepository>().SynchronizeAsync();
+        await context.RequestServices.GetRequiredService<IPaymentWorkflowService>().ExpireAsync();
+        await context.RequestServices.GetRequiredService<IOverdueFineService>().SynchronizeAsync();
     }
     await next();
 });

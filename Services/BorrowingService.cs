@@ -1,5 +1,4 @@
 using Lib_System.Models;
-using Lib_System.Repositories;
 using Lib_System.Repositories.Interfaces;
 using Lib_System.Services.Interfaces;
 
@@ -11,22 +10,20 @@ namespace Lib_System.Services
         private readonly IBookRepository _bookRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPaymentRepository _paymentRepository;
-        private readonly PaymentWorkflowRepository _workflow;
-        private readonly OverdueFineRepository _overdueFines;
-        private readonly FinePaymentRepository _finePayments;
+        private readonly IPaymentWorkflowService _workflow;
+        private readonly IFinePaymentService _finePayments;
 
         public BorrowingService(
             IBorrowingRepository borrowingRepository,
             IBookRepository bookRepository,
             IUserRepository userRepository,
-            IPaymentRepository paymentRepository, PaymentWorkflowRepository workflow, OverdueFineRepository overdueFines, FinePaymentRepository finePayments)
+            IPaymentRepository paymentRepository, IPaymentWorkflowService workflow, IFinePaymentService finePayments)
         {
             _borrowingRepository = borrowingRepository;
             _bookRepository = bookRepository;
             _userRepository = userRepository;
             _paymentRepository = paymentRepository;
             _workflow = workflow;
-            _overdueFines = overdueFines;
             _finePayments = finePayments;
         }
 

@@ -1,11 +1,10 @@
 using Lib_System.Models;
-using Lib_System.Repositories;
 using Lib_System.Repositories.Interfaces;
 using Lib_System.Services.Interfaces;
 
 namespace Lib_System.Services;
 
-public class PaymentService(IPaymentRepository payments, PaymentWorkflowRepository workflow) : IPaymentService
+public class PaymentService(IPaymentRepository payments, IPaymentWorkflowService workflow) : IPaymentService
 {
     public async Task<List<Payment>> GetAllAsync(int? restrictToUserId, string? status)
     {

@@ -1,10 +1,11 @@
 using Lib_System.Data;
-using Lib_System.Services;
+using Lib_System.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lib_System.Repositories;
+namespace Lib_System.Services;
 
-public class FinePaymentRepository(ApplicationDbContext db, OverdueFineRepository overdue, TimeProvider clock)
+public class FinePaymentService(ApplicationDbContext db, IOverdueFineService overdue, TimeProvider clock)
+    : IFinePaymentService
 {
     public async Task<ServiceResult> StartAsync(int id, int memberId, string method, decimal amount)
     {

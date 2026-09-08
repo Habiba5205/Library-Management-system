@@ -1,6 +1,5 @@
 ﻿using Lib_System.Models;
 using Lib_System.Repositories.Interfaces;
-using Lib_System.Repositories;
 using Lib_System.Services.Interfaces;
 using Lib_System.ViewModels;
 
@@ -10,9 +9,9 @@ namespace Lib_System.Services
     {
         private readonly IFineRepository _fineRepository;
         private readonly IBorrowingRepository _borrowingRepository;
-        private readonly FinePaymentRepository _payments;
+        private readonly IFinePaymentService _payments;
 
-        public FineService(IFineRepository fineRepository, IBorrowingRepository borrowingRepository, FinePaymentRepository payments)
+        public FineService(IFineRepository fineRepository, IBorrowingRepository borrowingRepository, IFinePaymentService payments)
         {
             _fineRepository = fineRepository;
             _borrowingRepository = borrowingRepository;

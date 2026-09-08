@@ -1,10 +1,11 @@
 using Lib_System.Data;
 using Lib_System.Models;
+using Lib_System.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lib_System.Repositories;
+namespace Lib_System.Services;
 
-public class OverdueFineRepository(ApplicationDbContext db, TimeProvider clock)
+public class OverdueFineService(ApplicationDbContext db, TimeProvider clock) : IOverdueFineService
 {
     public const decimal DailyRate = 5m;
 
