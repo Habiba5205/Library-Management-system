@@ -1,5 +1,64 @@
 Library Management System MVC - Handoff Status
 
+LATEST UPDATE - 2026-09-09
+Service/repository cleanup, real Stripe payments, user status instead of
+delete, a member-facing book catalog on the home page, and a currency fix.
+- Payment/fine workflow logic that lived in Repositories (PaymentWorkflowRepository,
+  OverdueFineRepository, FinePaymentRepository - all business logic, no
+  interfaces, injected as concrete classes) moved to Services as
+  PaymentWorkflowService, OverdueFineService, and FinePaymentService, each
+  behind a proper interface (IPaymentWorkflowService, IOverdueFineService,
+  IFinePaymentService). Repositories now only do data access. No behavior
+  change, no new migration.
+- Stripe Checkout replaces the old demo card simulator for both borrowing
+  payments and fine payments. New IStripeCheckoutService/StripeCheckoutService,
+  plus StripeWebhookController at /stripe/webhook (the webhook is the source
+  of truth; the browser's return URL also reconciles immediately so the
+  Details page updates without waiting on the webhook). Added the Stripe.net
+  NuGet package and a Stripe config section - real keys go in
+  `dotnet user-secrets`, never in appsettings.json:
+    dotnet user-secrets set "Stripe:SecretKey" "sk_test_..."
+    dotnet user-secrets set "Stripe:PublishableKey" "pk_test_..."
+    dotnet user-secrets set "Stripe:WebhookSecret" "whsec_..."   (from `stripe listen`)
+- Card payments are now gated on IStripeCheckoutService.IsConfigured, not on
+  IsDevelopment() - Card works in any environment once Stripe keys are set,
+  and fails gracefully ("Card checkout isn't available right now. Choose
+  Cash instead.") if they are not.
+- All money is now explicitly USD end to end. It was previously a mix of an
+  EGP-labeled Stripe charge and culture-dependent ToString("C") formatting in
+  views (which only ever showed "$" because of the dev machine's culture, not
+  because the app enforced it). Added Extensions/MoneyExtensions.cs
+  (decimal.ToUsd(), pinned to en-US) and switched every money display plus
+  the Stripe Checkout currency to it.
+  Note: Fine.Reason rows generated before this fix still contain the literal
+  text "EGP" (stored data, not code) - run once against LibSystemMvcDb if
+  that matters:
+    UPDATE Fines SET Reason = 'Automatic overdue fine ($5 per day)'
+    WHERE Reason LIKE '%EGP%';
+- Admin no longer deletes users. UserController.Delete/DeleteConfirmed
+  replaced with Deactivate (confirmation page, choose Active/Deactivated/
+  Suspended) and a one-click Reactivate. IUserService.DeleteAsync replaced
+  with SetStatusAsync(id, status). An admin cannot change their own status
+  (guards against self-lockout). Login already rejected non-Active users
+  before this change (IUserRepository.GetActiveByUsernameOrEmailAsync), so
+  this was mostly wiring the existing User.Status field into the UI instead
+  of hard deletes - no migration needed, the column already existed.
+- Member home page (Views/Home/Index.cshtml) now lists the full book catalog
+  with an Available/Borrowed-style status badge and a direct Borrow button,
+  via a new DashboardViewModel.Books list (populated for Members only - Admin
+  and Manager dashboards are unchanged).
+- Tested locally end to end: repo/service refactor, Stripe test-mode checkout
+  (borrowing + fine payment, both cash and card), user status changes
+  (deactivate/suspend/reactivate), member book catalog, USD formatting.
+  All confirmed working.
+- Correction to the "Authentication/login status" note further below: the
+  old line said Admin "cannot create, edit, delete" - that was never accurate
+  for Users specifically (UserController's Create/Edit are, and always were,
+  [Authorize(Roles = "Admin")]). Updated in place rather than left
+  contradictory.
+
+Next up: UI polish (role-specific designs) and additional input validation.
+
 FINE PAYMENT AND RETURN UPDATE
 - Supersedes the earlier pay-after-return rule: unpaid fines now block returns.
 - Members select Cash or Card for their own fines.
@@ -223,7 +282,9 @@ Authentication/login status:
   - admin / Admin@123
   - manager / Manager@123
   - member / Member@123
-- Admin can view records but cannot create, edit, delete, borrow, return, or manage payments.
+- Admin manages Users (create, edit, and change status to Active/Deactivated/
+  Suspended - users are never hard-deleted, see LATEST UPDATE below) but does
+  not borrow, return, or manage payments/fines directly.
 - Manager can manage and control the system.
 - Member can view available books, borrow available books, return their own borrowed books,
   and view their own borrowings/payments/fines.
