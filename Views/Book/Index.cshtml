@@ -54,7 +54,7 @@
             <td>@item.ISBN</td>
             <td>@(item.Category?.Name ?? "-")</td>
             <td>@string.Join(", ", item.BookAuthors.Select(ba => ba.Author?.Name))</td>
-            <td>@item.Price.ToString("C")</td>
+            <td>@item.Price.ToUsd()</td>
             <td>
                 <span class="badge bg-@(item.AvailabilityStatus == "Available" ? "success" : "secondary")">
                     @item.AvailabilityStatus

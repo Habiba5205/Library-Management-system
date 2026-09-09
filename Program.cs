@@ -18,6 +18,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IPaymentWorkflowService, PaymentWorkflowService>();
 builder.Services.AddScoped<IOverdueFineService, OverdueFineService>();
 builder.Services.AddScoped<IFinePaymentService, FinePaymentService>();
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutService>();
 builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

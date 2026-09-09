@@ -1,4 +1,5 @@
 using Lib_System.Data;
+using Lib_System.Models;
 using Lib_System.Repositories.Interfaces;
 using Lib_System.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +53,13 @@ namespace Lib_System.Repositories
                         .ThenInclude(b => b!.User)
                     .OrderByDescending(p => p.PaymentId)
                     .Take(5)
-                    .ToListAsync()
+                    .ToListAsync(),
+                Books = isMember
+                    ? await _context.Books
+                        .Include(b => b.Category)
+                        .OrderBy(b => b.Title)
+                        .ToListAsync()
+                    : new List<Book>()
             };
         }
     }

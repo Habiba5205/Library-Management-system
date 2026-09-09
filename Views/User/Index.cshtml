@@ -33,7 +33,7 @@
             <td>@item.Username</td>
             <td>@(item.Role?.RoleName ?? "-")</td>
             <td>
-                <span class="badge bg-@(item.Status == "Active" ? "success" : "secondary")">
+                <span class="badge bg-@(item.Status == "Active" ? "success" : item.Status == "Suspended" ? "danger" : "secondary")">
                     @item.Status
                 </span>
             </td>
@@ -42,7 +42,13 @@
                 @if (User.IsInRole("Admin"))
                 {
                 <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-warning">Edit</a>
-                <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-danger">Delete</a>
+                <a asp-action="Deactivate" asp-route-id="@item.UserId" class="btn btn-sm btn-danger">Change Status</a>
+                @if (item.Status != "Active")
+                {
+                    <form asp-action="Reactivate" asp-route-id="@item.UserId" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success">Reactivate</button>
+                    </form>
+                }
                 }
             </td>
         </tr>

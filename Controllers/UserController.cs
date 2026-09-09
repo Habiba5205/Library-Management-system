@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Lib_System.Controllers
 {
@@ -122,37 +123,62 @@ namespace Lib_System.Controllers
             return View(vm);
         }
 
+        /// <summary>Confirmation page for changing a user's status (replaces hard delete).
+        /// Lets an admin move a user to Active, Deactivated, or Suspended.</summary>
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Deactivate(int? id)
         {
             if (id == null) return NotFound();
 
-            var user = await _userService.GetForDeleteAsync(id.Value);
+            var user = await _userService.GetForStatusChangeAsync(id.Value);
             if (user == null) return NotFound();
 
             return View(user);
         }
 
-        [HttpPost, ActionName("Delete")]
+        [HttpPost, ActionName("Deactivate")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeactivateConfirmed(int id, string status)
         {
-            var user = await _userService.GetForDeleteAsync(id);
-            if (user == null) return RedirectToAction(nameof(Index));
+            if (id == GetCurrentUserId())
+            {
+                ModelState.AddModelError("", "You cannot change the status of your own account.");
+                var self = await _userService.GetForStatusChangeAsync(id);
+                return self == null ? NotFound() : View("Deactivate", self);
+            }
 
-            var result = await _userService.DeleteAsync(id);
+            var result = await _userService.SetStatusAsync(id, status);
             if (!result.Success)
             {
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(error.Field, error.Message);
                 }
-                return View("Delete", user);
+                var user = await _userService.GetForStatusChangeAsync(id);
+                return user == null ? NotFound() : View("Deactivate", user);
             }
 
             return RedirectToAction(nameof(Index));
         }
+
+        /// <summary>Restores a deactivated/suspended account to Active. No confirmation
+        /// page needed - this is the safe, reversible direction.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Reactivate(int id)
+        {
+            if (id != GetCurrentUserId())
+            {
+                await _userService.SetStatusAsync(id, "Active");
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private int GetCurrentUserId() =>
+            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
         private async Task PopulateRolesAsync(UserFormViewModel vm)
         {

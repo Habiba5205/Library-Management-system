@@ -22,7 +22,7 @@
         <dd class="col-sm-9">@(Model.Borrowing?.User?.Name ?? "-")</dd>
 
         <dt class="col-sm-3">Amount</dt>
-        <dd class="col-sm-9">@Model.Amount.ToString("C")</dd>
+        <dd class="col-sm-9">@Model.Amount.ToUsd()</dd>
 
         <dt class="col-sm-3">Fine Date</dt>
         <dd class="col-sm-9">@Model.FineDate.ToString("yyyy-MM-dd")</dd>
@@ -42,11 +42,11 @@
 <div class="mt-3">
     @foreach (var other in Model.Borrowing!.Fines.Where(f => f.FineId != Model.FineId && f.Status == "Unpaid").OrderByDescending(f => f.FineId))
     {
-        <p><a asp-action="Details" asp-route-id="@other.FineId">Other outstanding fine: @other.Amount.ToString("0.00") EGP</a></p>
+        <p><a asp-action="Details" asp-route-id="@other.FineId">Other outstanding fine: @other.Amount.ToUsd()</a></p>
     }
     @if (Model.Status == "Unpaid" && User.IsInRole("Member"))
     {
-        <p>Outstanding fine: <strong>@Model.Amount.ToString("0.00") EGP</strong>. Payment is required before returning the book.</p>
+        <p>Outstanding fine: <strong>@Model.Amount.ToUsd()</strong>. Payment is required before returning the book.</p>
         <form asp-action="Pay" method="post" class="mb-3">
             <input type="hidden" name="id" value="@Model.FineId" />
             <input type="hidden" name="amount" value="@Model.Amount" />
@@ -54,7 +54,7 @@
             <select id="fine-method" name="method" class="form-select mb-2" required>
                 <option value="">Select payment method</option>
                 <option value="Cash">Cash</option>
-                <option value="Card">Card (demo)</option>
+                <option value="Card">Card (Stripe)</option>
             </select>
             <button type="submit" class="btn btn-primary">Confirm Amount and Continue</button>
         </form>

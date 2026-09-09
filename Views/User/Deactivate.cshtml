@@ -1,0 +1,73 @@
+@model Lib_System.Models.User
+
+@{
+    ViewData["Title"] = "Change User Status";
+}
+
+<h1>Change User Status</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.SelectMany(ms => ms.Value?.Errors ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>()))
+        {
+            <p class="mb-0">@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">Name</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Role</dt>
+        <dd class="col-sm-9">@(Model.Role?.RoleName ?? "-")</dd>
+
+        <dt class="col-sm-3">Current Status</dt>
+        <dd class="col-sm-9">
+            <span class="badge bg-@(Model.Status == "Active" ? "success" : "secondary")">@Model.Status</span>
+        </dd>
+    </dl>
+</div>
+
+@{
+    var managedBookCount = Model.ManagedBooks?.Count ?? 0;
+    var borrowingCount = Model.Borrowings?.Count ?? 0;
+}
+@if (managedBookCount > 0 || borrowingCount > 0)
+{
+    <div class="alert alert-info">
+        Changing this user's status does not delete or affect
+        @(managedBookCount > 0 ? $"the {managedBookCount} book(s) they manage" : "")
+        @(managedBookCount > 0 && borrowingCount > 0 ? " or " : "")
+        @(borrowingCount > 0 ? $"their {borrowingCount} borrowing record(s)" : "").
+        Only the ability to log in is affected.
+    </div>
+}
+
+<form asp-action="Deactivate" method="post">
+    <input type="hidden" asp-for="UserId" />
+    <div class="form-group mb-3">
+        <label class="form-label d-block">New status</label>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="status" id="status-active" value="Active" @(Model.Status == "Active" ? "checked" : "") />
+            <label class="form-check-label" for="status-active">Active - the user can log in and use the system normally.</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="status" id="status-deactivated" value="Deactivated" @(Model.Status == "Deactivated" ? "checked" : "") />
+            <label class="form-check-label" for="status-deactivated">Deactivated - disabled indefinitely (e.g. the person left).</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="status" id="status-suspended" value="Suspended" @(Model.Status == "Suspended" ? "checked" : "") />
+            <label class="form-check-label" for="status-suspended">Suspended - temporarily blocked (e.g. a policy violation).</label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Status</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

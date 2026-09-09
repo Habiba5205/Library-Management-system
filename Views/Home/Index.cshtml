@@ -43,7 +43,7 @@
     <div class="summary-card">
         <span class="summary-label">Transactions</span>
         <strong>@Model.PaymentCount</strong>
-        <small>@Model.TotalPaidAmount.ToString("C") paid, @Model.UnpaidFineCount unpaid fine(s)</small>
+        <small>@Model.TotalPaidAmount.ToUsd() paid, @Model.UnpaidFineCount unpaid fine(s)</small>
     </div>
 </div>
 
@@ -110,7 +110,7 @@
                         {
                             <tr>
                                 <td>@(payment.Borrowing?.User?.Name ?? "-")</td>
-                                <td>@payment.Amount.ToString("C")</td>
+                                <td>@payment.Amount.ToUsd()</td>
                                 <td>
                                     <span class="badge bg-@(payment.Status == "Paid" ? "success" : "secondary")">
                                         @payment.Status
@@ -130,3 +130,51 @@
         </div>
     </div>
 </div>
+
+@if (User.IsInRole("Member"))
+{
+    <div class="panel mt-4">
+        <div class="panel-header">
+            <h2>All Books</h2>
+            <a asp-controller="Book" asp-action="Index">Search &amp; filter</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var book in Model.Books)
+                    {
+                        <tr>
+                            <td>@book.Title</td>
+                            <td>@(book.Category?.Name ?? "-")</td>
+                            <td>
+                                <span class="badge bg-@(book.AvailabilityStatus == "Available" ? "success" : "secondary")">
+                                    @book.AvailabilityStatus
+                                </span>
+                            </td>
+                            <td>
+                                @if (book.AvailabilityStatus == "Available")
+                                {
+                                    <a asp-controller="Borrowing" asp-action="Create" asp-route-bookId="@book.BookId" class="btn btn-sm btn-primary">Borrow</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Books.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted">No books in the catalog yet.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

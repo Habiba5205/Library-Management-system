@@ -24,7 +24,7 @@ namespace Lib_System.Services
 
         public Task<User?> GetForEditAsync(int id) => _userRepository.GetByIdAsync(id);
 
-        public Task<User?> GetForDeleteAsync(int id) => _userRepository.GetByIdWithRelationsAsync(id);
+        public Task<User?> GetForStatusChangeAsync(int id) => _userRepository.GetByIdWithRelationsAsync(id);
 
         public async Task<ServiceResult> ValidateForCreateAsync(UserFormViewModel vm)
         {
@@ -113,23 +113,30 @@ namespace Lib_System.Services
 
         public Task<bool> ExistsAsync(int id) => _userRepository.ExistsAsync(id);
 
-        public async Task<ServiceResult> DeleteAsync(int id)
+        private static readonly HashSet<string> ValidStatuses =
+            new(StringComparer.OrdinalIgnoreCase) { "Active", "Deactivated", "Suspended" };
+
+        public async Task<ServiceResult> SetStatusAsync(int id, string status)
         {
             var result = new ServiceResult();
 
-            var user = await _userRepository.GetByIdWithRelationsAsync(id);
-            if (user == null) return result;
-
-            if (user.Borrowings.Any())
+            if (!ValidStatuses.Contains(status))
             {
-                result.AddError(
-                    "This user cannot be deleted because they have borrowing history. Resolve or remove the related borrowings first.");
+                result.AddError("Status must be Active, Deactivated, or Suspended.");
                 return result;
             }
 
-            // Books this user manages are not blocked - Book.ManagerId is
-            // configured with SetNull, so those books just lose their manager.
-            await _userRepository.RemoveAsync(user);
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                result.AddError("User not found.");
+                return result;
+            }
+
+            // No borrowing/payment/fine-history check needed here (unlike the
+            // old hard delete) - a status change never removes the row, so
+            // that history always stays attached to a real user.
+            user.Status = status;
             await _userRepository.SaveChangesAsync();
             return result;
         }
