@@ -42,7 +42,7 @@
             <td>#@item.BorrowingId</td>
             <td>@(item.Borrowing?.Book?.Title ?? "-")</td>
             <td>@(item.Borrowing?.User?.Name ?? "-")</td>
-            <td>@item.Amount.ToString("C")</td>
+            <td>@item.Amount.ToUsd()</td>
             <td>@item.PaymentDate.ToString("yyyy-MM-dd")</td>
             <td>@item.PaymentMethod</td>
             <td>

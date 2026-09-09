@@ -10,10 +10,12 @@ namespace Lib_System.Controllers
     public class BorrowingController : Controller
     {
         private readonly IBorrowingService _borrowingService;
+        private readonly IStripeCheckoutService _stripe;
 
-        public BorrowingController(IBorrowingService borrowingService)
+        public BorrowingController(IBorrowingService borrowingService, IStripeCheckoutService stripe)
         {
             _borrowingService = borrowingService;
+            _stripe = stripe;
         }
 
         [Authorize(Roles = "Admin,Manager,Member")]
@@ -59,8 +61,8 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> Create(BorrowingFormViewModel vm)
         {
-            if (vm.PaymentMethod == "Card" && !HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
-                ModelState.AddModelError("PaymentMethod", "Card checkout is currently available in the development demo only.");
+            if (vm.PaymentMethod == "Card" && !_stripe.IsConfigured)
+                ModelState.AddModelError("PaymentMethod", "Card checkout isn't available right now. Choose Cash instead.");
             // Always the logged-in member - never trust a UserId posted from the form.
             vm.UserId = GetCurrentUserId();
 

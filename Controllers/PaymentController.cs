@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace Lib_System.Controllers;
 
 [Authorize(Roles = "Admin,Manager,Member")]
-public class PaymentController(IPaymentService payments, IWebHostEnvironment environment) : Controller
+public class PaymentController(IPaymentService payments, IStripeCheckoutService stripe) : Controller
 {
     public async Task<IActionResult> Index(string? status)
     {
@@ -33,30 +33,47 @@ public class PaymentController(IPaymentService payments, IWebHostEnvironment env
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    /// <summary>Starts a real Stripe Checkout Session and sends the member there to pay.</summary>
     [Authorize(Roles = "Member")]
     public async Task<IActionResult> Checkout(int id)
     {
-        if (!environment.IsDevelopment()) return NotFound();
         var payment = await payments.GetDetailsAsync(id);
         if (payment == null) return NotFound();
         if (payment.Borrowing?.UserId != CurrentUserId() || payment.PaymentMethod != "Card") return Forbid();
         if (payment.Status != "Pending") return RedirectToAction(nameof(Details), new { id });
-        return View(payment);
+
+        if (!stripe.IsConfigured)
+        {
+            TempData["PaymentMessage"] = "Card payments aren't set up yet. Ask an administrator to configure Stripe.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var successUrl = Url.Action(nameof(StripeReturn), "Payment", new { id }, Request.Scheme)!;
+        var cancelUrl = Url.Action(nameof(Details), "Payment", new { id }, Request.Scheme)!;
+        var sessionUrl = await stripe.CreateBorrowingPaymentSessionAsync(payment, successUrl, cancelUrl);
+        return Redirect(sessionUrl);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    /// <summary>
+    /// Where Stripe sends the member back after Checkout. The webhook is the
+    /// authoritative way a payment gets completed (it works even if the
+    /// member closes the tab), but reconciling here too means the Details
+    /// page shows the right status immediately instead of waiting on the
+    /// webhook round-trip.
+    /// </summary>
     [Authorize(Roles = "Member")]
-    public async Task<IActionResult> DemoResult(int id, string outcome)
+    public async Task<IActionResult> StripeReturn(int id, string? session_id)
     {
-        if (!environment.IsDevelopment()) return NotFound();
-        if (outcome is not ("success" or "failure" or "cancel")) return BadRequest();
-        var completed = await payments.CompleteDemoAsync(id, CurrentUserId(), outcome == "success");
-        if (!completed)
-            TempData["PaymentMessage"] = "The payment could not be completed. The reservation may have expired.";
-        else
-            TempData["PaymentMessage"] = outcome == "success" ? "Demo payment succeeded. Your borrowing is active."
-                : "Payment was not completed. Your borrowing request failed and the book is available again.";
+        if (!string.IsNullOrEmpty(session_id))
+            await stripe.HandleCompletedSessionAsync(session_id);
+
+        var payment = await payments.GetDetailsAsync(id);
+        TempData["PaymentMessage"] = payment?.Status switch
+        {
+            "Paid" => "Payment succeeded. Your borrowing is now active.",
+            "Failed" => "The payment wasn't completed. The book is available again.",
+            _ => "We're still confirming your payment with Stripe - refresh in a moment if the status doesn't update."
+        };
         return RedirectToAction(nameof(Details), new { id });
     }
 

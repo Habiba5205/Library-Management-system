@@ -10,7 +10,7 @@
 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 @foreach (var fine in Model.Fines.Where(f => f.Status == "Unpaid").OrderByDescending(f => f.FineId))
 {
-    <p><a asp-controller="Fine" asp-action="Details" asp-route-id="@fine.FineId">Pay outstanding fine: @fine.Amount.ToString("0.00") EGP</a></p>
+    <p><a asp-controller="Fine" asp-action="Details" asp-route-id="@fine.FineId">Pay outstanding fine: @fine.Amount.ToUsd()</a></p>
 }
 
 <div class="alert alert-info">

@@ -19,7 +19,4 @@ public class PaymentService(IPaymentRepository payments, IPaymentWorkflowService
     }
 
     public Task<bool> ConfirmCashAsync(int id) => workflow.CompleteAsync(id, "Cash", null, true);
-
-    public Task<bool> CompleteDemoAsync(int id, int memberId, bool success) =>
-        workflow.CompleteAsync(id, "Card", memberId, success);
 }

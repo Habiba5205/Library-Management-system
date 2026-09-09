@@ -44,7 +44,7 @@ public class OverdueFineService(ApplicationDbContext db, TimeProvider clock) : I
                 {
                     BorrowingId = borrowing.BorrowingId, IsAutomatic = true,
                     FineDate = borrowing.DueDate.Date.AddDays(1),
-                    Reason = "Automatic overdue fine (5 EGP per day)", Status = "Unpaid"
+                    Reason = "Automatic overdue fine ($5 per day)", Status = "Unpaid"
                 };
                 db.Fines.Add(fine);
             }

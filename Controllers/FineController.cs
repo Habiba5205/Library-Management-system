@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Lib_System.Controllers;
 
 [Authorize(Roles = "Admin,Manager,Member")]
-public class FineController(IFineService fines, IWebHostEnvironment environment) : Controller
+public class FineController(IFineService fines, IStripeCheckoutService stripe) : Controller
 {
     public async Task<IActionResult> Index(string? status)
     {
@@ -26,7 +26,6 @@ public class FineController(IFineService fines, IWebHostEnvironment environment)
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Member")]
     public async Task<IActionResult> Pay(int id, string method, decimal amount)
     {
-        if (method == "Card" && !environment.IsDevelopment()) return NotFound();
         var result = await fines.StartPaymentAsync(id, CurrentUserId(), method, amount);
         if (!result.Success)
         {
@@ -37,26 +36,39 @@ public class FineController(IFineService fines, IWebHostEnvironment environment)
         return RedirectToAction(method == "Card" ? nameof(Checkout) : nameof(Details), new { id });
     }
 
+    /// <summary>Starts a real Stripe Checkout Session and sends the member there to pay the fine.</summary>
     [Authorize(Roles = "Member")]
     public async Task<IActionResult> Checkout(int id)
     {
-        if (!environment.IsDevelopment()) return NotFound();
         var fine = await fines.GetDetailsAsync(id);
         if (fine == null) return NotFound();
         if (fine.Borrowing?.UserId != CurrentUserId()) return Forbid();
         if (fine.Status != "Unpaid" || fine.PaymentMethod != "Card" || fine.PaymentStatus != "Pending")
             return RedirectToAction(nameof(Details), new { id });
-        return View(fine);
+
+        if (!stripe.IsConfigured)
+        {
+            TempData["FineMessage"] = "Card payments aren't set up yet. Ask an administrator to configure Stripe.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var successUrl = Url.Action(nameof(StripeReturn), "Fine", new { id }, Request.Scheme)!;
+        var cancelUrl = Url.Action(nameof(Details), "Fine", new { id }, Request.Scheme)!;
+        var sessionUrl = await stripe.CreateFinePaymentSessionAsync(fine, successUrl, cancelUrl);
+        return Redirect(sessionUrl);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Member")]
-    public async Task<IActionResult> DemoResult(int id, Guid attemptId, decimal amount, string outcome)
+    /// <summary>Where Stripe sends the member back after Checkout (see PaymentController.StripeReturn for why this also reconciles, not just the webhook).</summary>
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> StripeReturn(int id, string? session_id)
     {
-        if (!environment.IsDevelopment()) return NotFound();
-        if (outcome is not ("success" or "failure" or "cancel")) return BadRequest();
-        var result = await fines.CompletePaymentAsync(id, CurrentUserId(), "Card", attemptId, amount, outcome == "success");
-        SetMessage(result, outcome == "success" ? "Demo payment completed. The book is returned once all its fines are paid."
-            : "Payment was not completed. The fine is still unpaid and you can retry.");
+        if (!string.IsNullOrEmpty(session_id))
+            await stripe.HandleCompletedSessionAsync(session_id);
+
+        var fine = await fines.GetDetailsAsync(id);
+        TempData["FineMessage"] = fine?.Status == "Paid"
+            ? "Payment succeeded. The book is returned once all its fines are paid."
+            : "We're still confirming your payment with Stripe - refresh in a moment if the status doesn't update.";
         return RedirectToAction(nameof(Details), new { id });
     }
 

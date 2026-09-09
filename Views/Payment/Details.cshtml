@@ -26,7 +26,7 @@
         <dd class="col-sm-9">@(Model.Borrowing?.User?.Name ?? "-")</dd>
 
         <dt class="col-sm-3">Amount</dt>
-        <dd class="col-sm-9">@Model.Amount.ToString("C")</dd>
+        <dd class="col-sm-9">@Model.Amount.ToUsd()</dd>
 
         <dt class="col-sm-3">Payment Date</dt>
         <dd class="col-sm-9">@Model.PaymentDate.ToString("yyyy-MM-dd")</dd>
@@ -56,7 +56,7 @@
     }
     @if (User.IsInRole("Member") && Model.PaymentMethod == "Card" && Model.Status == "Pending")
     {
-        <a asp-action="Checkout" asp-route-id="@Model.PaymentId" class="btn btn-primary">Continue to Demo Checkout</a>
+        <a asp-action="Checkout" asp-route-id="@Model.PaymentId" class="btn btn-primary">Pay with Card (Stripe)</a>
     }
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

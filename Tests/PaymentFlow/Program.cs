@@ -25,7 +25,7 @@ try
         await db.SaveChangesAsync();
         return book.BookId;
     }
-    var workflow = new PaymentWorkflowRepository(db, clock);
+    var workflow = new PaymentWorkflowService(db, clock);
     async Task<Payment> Read(int id)
     {
         db.ChangeTracker.Clear();
@@ -74,7 +74,7 @@ try
     async Task<int?> CompetingReservation()
     {
         await using var contender = new ApplicationDbContext(options);
-        return await new PaymentWorkflowRepository(contender, clock).ReserveAsync(sharedBook, member.UserId, "Cash");
+        return await new PaymentWorkflowService(contender, clock).ReserveAsync(sharedBook, member.UserId, "Cash");
     }
     var competing = await Task.WhenAll(CompetingReservation(), CompetingReservation());
     Check(competing.Count(id => id.HasValue) == 1, "Concurrent requests reserve a book only once");
@@ -133,7 +133,7 @@ try
         !await db.Books.AnyAsync(b => b.BookId == protectedBookId), "Available book without history can be deleted");
     var historicalBookId = (await Read(expired)).Borrowing!.BookId;
     Check(!(await bookService.DeleteAsync(historicalBookId)).Success, "Available book with borrowing history cannot be deleted");
-    var overdueFines = new OverdueFineRepository(db, clock);
+    var overdueFines = new OverdueFineService(db, clock);
     async Task<Borrowing> Loan(string status, int dueDaysAgo)
     {
         var loan = new Borrowing
@@ -157,14 +157,14 @@ try
     await overdueFines.SynchronizeAsync();
     Check(!await db.Fines.AnyAsync(f => f.BorrowingId == dueToday.BorrowingId && f.IsAutomatic), "No fine on due date");
     var automatic = await db.Fines.SingleAsync(f => f.BorrowingId == overdue.BorrowingId && f.IsAutomatic);
-    Check(automatic.Amount == 15, "Three overdue days cost 15 EGP");
+    Check(automatic.Amount == 15, "Three overdue days cost $15");
     Check(await db.Fines.AnyAsync(f => f.BorrowingId == earlyRequested.BorrowingId && f.IsAutomatic && f.Amount == 5), "Early return request does not stop fines");
     Check(!await db.Fines.AnyAsync(f => (f.BorrowingId == unpaidReservation.BorrowingId || f.BorrowingId == failedLoan.BorrowingId) && f.IsAutomatic), "Reservations and failed loans are excluded");
     Check(manual.Amount == 7 && !manual.IsAutomatic, "Manual fine is preserved");
     clock.Advance(TimeSpan.FromDays(2));
     await overdueFines.SynchronizeAsync();
     Check(automatic.Amount == 25 && await db.Fines.CountAsync(f => f.BorrowingId == overdue.BorrowingId && f.IsAutomatic) == 1, "Catch-up increases one fine without duplication");
-    var finePayments = new FinePaymentRepository(db, overdueFines, clock);
+    var finePayments = new FinePaymentService(db, overdueFines, clock);
     var fineService = new FineService(new FineRepository(db), new BorrowingRepository(db), finePayments);
     try
     {
@@ -197,7 +197,7 @@ try
     async Task RefreshFines()
     {
         await using var workerDb = new ApplicationDbContext(options);
-        await new OverdueFineRepository(workerDb, clock).SynchronizeAsync();
+        await new OverdueFineService(workerDb, clock).SynchronizeAsync();
     }
     await Task.WhenAll(RefreshFines(), RefreshFines());
     Check(await db.Fines.CountAsync(f => f.BorrowingId == concurrentLoan.BorrowingId && f.IsAutomatic) == 1, "Concurrent checks create only one automatic fine");
