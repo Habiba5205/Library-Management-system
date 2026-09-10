@@ -16,11 +16,11 @@
 <div class="alert alert-info">
     @if (isEarlyReturnRequest)
     {
-        <span>Confirm requesting manager approval to return <strong>@Model.Book?.Title</strong> before the due date.</span>
+        <span>Request the manager's approval to return <strong>@Model.Book?.Title</strong> before the due date.</span>
     }
     else
     {
-        <span>Confirm returning <strong>@Model.Book?.Title</strong> borrowed by <strong>@Model.User?.Name</strong>.</span>
+        <span>Confirm the return of <strong>@Model.Book?.Title</strong>, borrowed by <strong>@Model.User?.Name</strong>.</span>
     }
 </div>
 

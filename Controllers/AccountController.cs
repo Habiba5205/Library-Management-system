@@ -55,7 +55,7 @@ namespace Lib_System.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    TempData["SuccessMessage"] = "Registration successful. You can login now.";
+                    TempData["SuccessMessage"] = "Registration successful. You can now sign in.";
                     return RedirectToAction(nameof(Login));
                 }
             }

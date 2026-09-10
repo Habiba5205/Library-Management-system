@@ -43,7 +43,7 @@ namespace Lib_System.Services
             var book = await _bookRepository.GetByIdAsync(bookId);
             if (book == null)
             {
-                result.AddError("BookId", "Selected book was not found.");
+                result.AddError("BookId", "The selected book was not found.");
             }
             else if (book.AvailabilityStatus != "Available")
             {
@@ -84,13 +84,13 @@ namespace Lib_System.Services
 
             if (borrowing.Status == "Early Return Requested")
             {
-                result.AddError("Early return was already requested.");
+                result.AddError("An early return has already been requested.");
                 return result;
             }
 
             if (DateTime.Today >= borrowing.DueDate.Date)
             {
-                result.AddError("This borrowing is not before the due date anymore.");
+                result.AddError("The loan is now due or overdue. Request a regular return instead.");
                 return result;
             }
 

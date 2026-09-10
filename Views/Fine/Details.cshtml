@@ -61,10 +61,10 @@
     }
     @if (Model.Status == "Unpaid" && Model.PaymentStatus == "Pending" && Model.PaymentMethod == "Cash")
     {
-        <p class="alert alert-info">Cash payment pending manager confirmation.</p>
+        <p class="alert alert-info">The cash payment is awaiting confirmation from the manager.</p>
         @if (User.IsInRole("Manager"))
         {
-            <form asp-action="ConfirmCash" method="post" class="mb-3">
+            <form asp-action="ConfirmCash" method="post" class="mb-3" data-confirm="Have you received both the fine payment and the book?">
                 <input type="hidden" name="id" value="@Model.FineId" />
                 <input type="hidden" name="attemptId" value="@Model.PaymentAttemptId" />
                 <input type="hidden" name="amount" value="@Model.Amount" />

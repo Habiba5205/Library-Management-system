@@ -4,28 +4,27 @@
     ViewData["Title"] = "Books";
 }
 
-<h1>Books</h1>
-
+<div class="page-header">
+<h1>@(User.IsInRole("Member") ? "Browse Books" : "Books")</h1>
 @if (User.IsInRole("Manager"))
 {
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Add New Book</a>
-</p>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus" aria-hidden="true"></i>Add Book</a>
 }
+</div>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
         <input type="text" name="searchString" value="@ViewBag.SearchString"
-               class="form-control" placeholder="Search title or ISBN" />
+               class="form-control" placeholder="Search title or ISBN" aria-label="Search title or ISBN" />
     </div>
     <div class="col-auto">
-        <select name="categoryId" asp-items="ViewBag.Categories" class="form-select">
-            <option value="">-- All Categories --</option>
+        <select name="categoryId" asp-items="ViewBag.Categories" class="form-select" aria-label="Category">
+            <option value="">All categories</option>
         </select>
     </div>
     <div class="col-auto">
-        <select name="authorId" asp-items="ViewBag.Authors" class="form-select">
-            <option value="">-- All Authors --</option>
+        <select name="authorId" asp-items="ViewBag.Authors" class="form-select" aria-label="Author">
+            <option value="">All authors</option>
         </select>
     </div>
     <div class="col-auto">
@@ -34,6 +33,12 @@
     </div>
 </form>
 
+@if (User.IsInRole("Member"))
+{
+    <partial name="_BookGrid" model="Model" />
+}
+else
+{
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
@@ -76,3 +81,4 @@
 }
     </tbody>
 </table>
+}

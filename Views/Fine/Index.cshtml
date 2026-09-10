@@ -4,12 +4,14 @@
     ViewData["Title"] = "Fines";
 }
 
-<h1>Fines</h1>
+<div class="page-header">
+    <h1>@(User.IsInRole("Member") ? "My Fines" : "Fines")</h1>
+</div>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
-        <select name="status" class="form-select">
-            <option value="">-- All Statuses --</option>
+        <select name="status" class="form-select" aria-label="Fine status">
+            <option value="">All statuses</option>
             <option value="Unpaid" selected="@(ViewBag.Status == "Unpaid")">Unpaid</option>
             <option value="Paid" selected="@(ViewBag.Status == "Paid")">Paid</option>
             <option value="Waived" selected="@(ViewBag.Status == "Waived")">Waived</option>

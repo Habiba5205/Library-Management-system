@@ -4,14 +4,14 @@
     ViewData["Title"] = "Categories";
 }
 
+<div class="page-header">
 <h1>Categories</h1>
 
 @if (User.IsInRole("Manager"))
 {
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Add New Category</a>
-</p>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus" aria-hidden="true"></i>Add Category</a>
 }
+</div>
 
 @if (TempData["Message"] != null)
 {

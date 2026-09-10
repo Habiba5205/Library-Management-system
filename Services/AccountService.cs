@@ -26,7 +26,7 @@ namespace Lib_System.Services
             if (user == null ||
                 _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, vm.Password) == PasswordVerificationResult.Failed)
             {
-                result.AddError("Invalid username/email or password.");
+                result.AddError("The username, email address, or password is incorrect.");
                 return result;
             }
 

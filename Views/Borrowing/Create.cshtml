@@ -14,7 +14,7 @@
             <div class="form-group mb-3">
                 <label asp-for="BookId" class="control-label"></label>
                 <select asp-for="BookId" asp-items="Model.Books" class="form-select">
-                    <option value="">-- Select Book --</option>
+                    <option value="">Select a book</option>
                 </select>
                 <span asp-validation-for="BookId" class="text-danger"></span>
             </div>
@@ -27,12 +27,19 @@
             </div>
 
             <div class="form-group mb-3">
-                <label asp-for="PaymentMethod" class="control-label"></label>
-                <select asp-for="PaymentMethod" class="form-select">
-                    <option value="">-- Select Payment Method --</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Card</option>
-                </select>
+                <fieldset>
+                    <legend class="form-label">Payment method</legend>
+                    <div class="payment-choices">
+                        <label class="payment-choice">
+                            <input asp-for="PaymentMethod" id="payment-card" type="radio" value="Card" />
+                            <i data-lucide="credit-card" aria-hidden="true"></i><span>Card (Stripe)</span>
+                        </label>
+                        <label class="payment-choice">
+                            <input asp-for="PaymentMethod" id="payment-cash" type="radio" value="Cash" />
+                            <i data-lucide="banknote" aria-hidden="true"></i><span>Cash</span>
+                        </label>
+                    </div>
+                </fieldset>
                 <span asp-validation-for="PaymentMethod" class="text-danger"></span>
             </div>
 

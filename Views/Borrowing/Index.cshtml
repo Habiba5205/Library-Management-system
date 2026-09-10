@@ -4,19 +4,19 @@
     ViewData["Title"] = "Borrowings";
 }
 
-<h1>Borrowings</h1>
+<div class="page-header">
+<h1>@(User.IsInRole("Member") ? "My Borrowings" : "Borrowings")</h1>
 
 @if (User.IsInRole("Member"))
 {
-    <p>
-        <a asp-action="Create" class="btn btn-primary">+ Borrow Book</a>
-    </p>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="book-plus" aria-hidden="true"></i>Borrow Book</a>
 }
+</div>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-auto">
-        <select name="status" class="form-select">
-            <option value="">-- All Statuses --</option>
+        <select name="status" class="form-select" aria-label="Borrowing status">
+            <option value="">All statuses</option>
             <option value="Borrowed" selected="@(ViewBag.Status == "Borrowed")">Borrowed</option>
             <option value="Reserved" selected="@(ViewBag.Status == "Reserved")">Reserved</option>
             <option value="Failed" selected="@(ViewBag.Status == "Failed")">Failed</option>

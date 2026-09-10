@@ -1,13 +1,13 @@
 @model Lib_System.ViewModels.LoginViewModel
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Sign In";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="panel p-4">
-            <h1 class="h3 mb-3">Login</h1>
+            <h1 class="h3 mb-3">Sign in to your account</h1>
 
             @if (TempData["SuccessMessage"] is string successMessage)
             {
@@ -20,13 +20,13 @@
 
                 <div class="form-group mb-3">
                     <label asp-for="UsernameOrEmail" class="control-label"></label>
-                    <input asp-for="UsernameOrEmail" class="form-control" />
+                    <input asp-for="UsernameOrEmail" class="form-control" placeholder="Enter username or email" autocomplete="username" />
                     <span asp-validation-for="UsernameOrEmail" class="text-danger"></span>
                 </div>
 
                 <div class="form-group mb-3">
                     <label asp-for="Password" class="control-label"></label>
-                    <input asp-for="Password" class="form-control" />
+                    <input asp-for="Password" class="form-control" placeholder="Enter your password" autocomplete="current-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
 
@@ -35,16 +35,13 @@
                     <label asp-for="RememberMe" class="form-check-label"></label>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <button type="submit" class="btn btn-primary w-100">Sign in<i data-lucide="arrow-right" aria-hidden="true"></i></button>
             </form>
 
             <div class="mt-3 text-center">
-                <a asp-action="Register">Create member account</a>
+                <a asp-action="Register">Create a member account</a>
             </div>
 
-            <div class="mt-4 text-muted small">
-                Demo accounts: admin / Admin@123, manager / Manager@123, member / Member@123
-            </div>
         </div>
     </div>
 </div>

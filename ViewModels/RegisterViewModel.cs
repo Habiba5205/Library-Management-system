@@ -24,7 +24,7 @@ namespace Lib_System.ViewModels
 
         [Required]
         [DataType(DataType.Password)]
-        [Compare(nameof(Password), ErrorMessage = "Password and confirmation password do not match.")]
+        [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; } = string.Empty;
 

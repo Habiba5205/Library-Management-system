@@ -14,13 +14,13 @@
 
             <div class="form-group mb-3">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" class="form-control" placeholder="Enter author name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
                 <label asp-for="Biography" class="control-label"></label>
-                <textarea asp-for="Biography" class="form-control" rows="4"></textarea>
+                <textarea asp-for="Biography" class="form-control" placeholder="Enter author biography" rows="4"></textarea>
                 <span asp-validation-for="Biography" class="text-danger"></span>
             </div>
 

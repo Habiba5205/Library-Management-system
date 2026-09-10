@@ -1,6 +1,55 @@
 Library Management System MVC - Handoff Status
 
-LATEST UPDATE - 2026-09-09
+LATEST UPDATE - 2026-09-10
+English copy review: corrected sign-in/registration wording, early-return
+messages, cash confirmation questions and password confirmation validation.
+Stored statuses, database content and business rules are unchanged.
+EnglishCheck build and four submission-guard tests passed.
+
+Interaction polish (existing design retained):
+- Button hover/pressed/loading states and client-side repeat-submit guards.
+- Invalid forms remain editable; back/forward navigation clears busy state.
+- Cash payment/fine confirmations require an explicit confirmation dialog.
+- Table rows highlight on hover/focus; icon actions have hover/focus tooltips.
+- Rows-per-page selector (10/25/50), dialog entrance motion, larger touch
+  targets and reduced-motion support.
+- Four dependency-free submission-guard tests pass:
+  node --test Tests/UI/interactions.test.cjs
+- InteractionCheck build passed. Full browser interaction testing remains
+  pending because the browser connection is unavailable.
+
+Closer Figma layout adaptation:
+- Compact sidebar/topbar, locally hosted Inter font, smaller headings/controls.
+- Member catalog uses a book grid with honest missing-cover placeholders.
+- Dashboard activity lists, member quick links and manager action shortcuts.
+- Staff lists have local search, 10-row pagination and labelled icon actions.
+- Staff create/edit/delete links open real MVC forms in native dialogs.
+  Submissions keep existing antiforgery, validation and controller redirects;
+  direct form URLs still work. No simulated payment or authentication added.
+- Borrowing payment selection uses Cash/Card radio options.
+- Existing permissions, data queries and business rules remain unchanged.
+- Build and HTTP checks passed for dashboards and 22 role-specific routes.
+- Browser connection unavailable: visual fidelity and interactive dialog,
+  search and pagination behavior still need browser verification.
+
+Added field-specific placeholders to login/signup and create/edit forms for
+books, authors, categories and users. Simplified dropdown prompt text.
+Labels, validation, field types, defaults and saved values are unchanged.
+PlaceholderCheck build passed with zero warnings/errors.
+
+Applied the approved Librarium design direction to the MVC application.
+- Shared role-aware sidebar, mobile offcanvas navigation, topbar and sign-out.
+- Updated login/signup presentation, dashboard metrics, list headers, forms,
+  tables, status badges and buttons. Member-only and staff actions preserved.
+- Locally served Lucide 0.468.0 icons (license included) and library photo.
+- No controllers, services, repositories, schema or payment rules changed.
+- Razor build passed with zero warnings/errors. HTTP smoke checks passed for
+  login/logout and main pages across Admin, Manager and Member.
+- Browser automation unavailable: desktop/mobile visual checks still needed.
+- Design changes, interaction tests and local visual assets are included in
+  the UI update. Reference PDFs and the temporary Figma preview are excluded.
+
+PREVIOUS UPDATE - 2026-09-09
 Service/repository cleanup, real Stripe payments, user status instead of
 delete, a member-facing book catalog on the home page, and a currency fix.
 - Payment/fine workflow logic that lived in Repositories (PaymentWorkflowRepository,

@@ -2,7 +2,37 @@
 
 ASP.NET Core MVC web application for managing a library catalog, users, borrowing records, payments, fines, and role-based access.
 
-This project was built as an MVC application, not a Web API. The frontend uses Razor Views and Bootstrap, while the backend uses MVC controllers, services, repositories, Entity Framework Core, and SQL Server LocalDB.
+This project was built as an MVC application, not a Web API. The frontend uses Razor Views and Bootstrap, while the backend uses MVC controllers, services, repositories, Entity Framework Core, and SQL Server LocalDB. The Librarium interface is adapted from the Figma design; the running application does not use React or the export's sample data.
+
+## Current Preview
+
+Open **http://localhost:5146** for the current local design preview.
+The default launch profile still uses port 5137; an older process on that
+port may show an earlier build. Preview servers run only while their process
+is active.
+
+### Interface
+
+- Role-specific sidebar and responsive mobile navigation.
+- Locally hosted Inter font, Lucide icons and field-specific placeholders.
+- Dashboard activity lists and role-specific shortcuts.
+- Member book grid with placeholders when cover images are unavailable.
+- Staff tables with search, 10/25/50-row client-side pagination and icon actions.
+- Hover/focus tooltips, row highlighting, button loading states and
+  client-side duplicate-submit guards.
+- Confirmation dialogs before acknowledging cash payments or cash fine returns.
+- Catalog/user create, edit and delete dialogs using real MVC forms.
+  Direct form URLs and normal server-side validation remain supported.
+- Cash/Card selection for member borrowing.
+
+Build and HTTP page checks passed. Desktop/mobile visual matching and the
+new dialog, search and pagination interactions still require browser testing.
+
+Submission-guard unit tests (Node.js required):
+
+```powershell
+node --test Tests/UI/interactions.test.cjs
+```
 
 ## Features
 
@@ -11,7 +41,7 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 Manual fine creation is disabled. New fines are generated automatically;
 previously recorded manual fines remain in the database.
 
-- Active loans accrue 5 EGP per overdue calendar day, starting the day after
+- Active loans accrue 5 USD per overdue calendar day, starting the day after
   the due date. An early-return request alone does not stop the calculation.
 - There is one automatic fine per borrowing. The amount catches up after
   downtime and stops growing on the recorded return date.
@@ -19,8 +49,8 @@ previously recorded manual fines remain in the database.
 - Existing active overdue loans are included. Old completed loans without an
   automatic fine are not retroactively charged. Existing manual fines remain
   separate and unchanged.
-- Members see and pay only their own fines using Cash or the Development-only
-  demo card checkout. Unpaid fines block book returns.
+- Members see and pay only their own fines using Cash or Stripe Checkout.
+  Unpaid fines block book returns.
 - Cash stays pending until the manager confirms receipt of cash and the book.
   Successful card checkout settles automatically, with no manager action.
 - Fine payment and the book return are saved together once all fines for that
@@ -40,12 +70,14 @@ previously recorded manual fines remain in the database.
 - Cash holds the book for 48 hours. The manager confirms receipt of cash from
   Payment Details. This marks the payment Paid and starts the loan on that day.
 - Unpaid cash reservations expire as Failed, releasing the book.
-- Card opens a Development-only demo checkout. Success starts the borrowing
+- Card opens Stripe Checkout when configured. Verified success starts the borrowing
   automatically; failure or cancellation releases the book. Managers cannot
   confirm, edit, or delete card payments.
-- Demo checkout never collects card details or charges money. A real provider
-  integration is still required before enabling card payment outside Development.
-- Abandoned demo card checkouts expire after 30 minutes.
+- Card details are entered on Stripe's hosted checkout, not in this app.
+  Use Stripe test keys for development. If Stripe is not configured, card
+  checkout is unavailable; Cash remains supported.
+- Abandoned card reservations expire after 30 minutes.
+- Successful payment starts a fixed 14-day loan. All amounts are in USD.
 - Expiry runs every minute while the app is running and before page requests.
   After downtime, overdue reservations expire on startup or the next request.
 - Existing borrowing history is preserved; these rules apply to new reservations.
@@ -83,7 +115,8 @@ dotnet run --project Tests/PaymentFlow/PaymentFlow.csproj --configuration Paymen
 
 ### Manager
 
-- Can manage the catalog, borrowings, and fines.
+- Can manage the catalog, process returns and view automatic fines.
+- Can confirm cash fine payments together with the book return.
 - Can view payments and confirm pending cash payments before reservation expiry.
 - Cannot manually alter card payments.
 - Cannot review or manage users.
@@ -91,7 +124,7 @@ dotnet run --project Tests/PaymentFlow/PaymentFlow.csproj --configuration Paymen
 ### Member
 
 - Can sign up from the login page.
-- Can view available books.
+- Can view the full catalog on the dashboard and browse available books.
 - Can borrow available books.
 - Can return their own borrowed books.
 - Can view their own borrowings, payments, and fines.
@@ -113,6 +146,8 @@ These accounts are created automatically when the app starts if they do not alre
 - ASP.NET Core MVC Razor Views (`.cshtml`)
 - Bootstrap
 - Custom CSS
+- JavaScript for table search, pagination and MVC form dialogs
+- Lucide icons and Inter font (served locally with licenses)
 - jQuery validation from the MVC template
 
 ### Backend
@@ -125,6 +160,7 @@ These accounts are created automatically when the app starts if they do not alre
 - EF Core Migrations
 - ASP.NET Core Cookie Authentication
 - ASP.NET Core `PasswordHasher<User>`
+- Stripe.net for hosted checkout and webhook verification
 
 ## Architecture
 
@@ -137,6 +173,9 @@ The project follows the MVC pattern with a Service-Repository layer:
 - ViewModels shape data for forms and pages.
 
 ## Database
+
+Each device has its own LocalDB database. Git pulls share code and
+migrations, not books or other records added on a teammate's device.
 
 Server:
 
@@ -163,6 +202,8 @@ Main tables:
 - Fines
 
 ## Setup
+
+Requires Windows, the .NET 10 SDK and SQL Server Express LocalDB.
 
 1. Clone the repository:
 
@@ -192,13 +233,13 @@ dotnet tool run dotnet-ef database update
 5. Run the application:
 
 ```powershell
-dotnet run --project Lib_System.csproj
+dotnet run --project Lib_System.csproj --launch-profile http --urls http://localhost:5146
 ```
 
 6. Open the browser:
 
 ```text
-http://localhost:5137
+http://localhost:5146
 ```
 
 If the folder contains both a project file and a solution file, build the project directly:
@@ -207,21 +248,56 @@ If the folder contains both a project file and a solution file, build the projec
 dotnet build Lib_System.csproj
 ```
 
+The app also applies pending migrations at startup. If port 5146 is already
+occupied by the preview, use it directly or choose another free port.
+Running without `--urls` uses the default profile URL, http://localhost:5137.
+
+### Stripe Configuration
+
+Cash testing requires no Stripe account. For card testing, use your own
+Stripe test-mode credentials, never live keys or real card details.
+Keep secrets out of Git:
+
+```powershell
+dotnet user-secrets init --project Lib_System.csproj
+dotnet user-secrets set "Stripe:SecretKey" "sk_test_YOUR_KEY" --project Lib_System.csproj
+dotnet user-secrets set "Stripe:PublishableKey" "pk_test_YOUR_KEY" --project Lib_System.csproj
+```
+
+With the Stripe CLI installed and authenticated, forward local events:
+
+```powershell
+stripe listen --forward-to http://localhost:5146/stripe/webhook
+```
+
+Store the signing secret printed by that command, then restart the app:
+
+```powershell
+dotnet user-secrets set "Stripe:WebhookSecret" "whsec_YOUR_SECRET" --project Lib_System.csproj
+```
+
+The app verifies Stripe payment state through webhook events and checkout
+return reconciliation. The return URL alone does not prove payment succeeded.
+
 ## Suggested Test Flow
 
 1. Login as Manager.
 2. Create a category.
 3. Create an author.
-4. Login as Admin and create a member user.
-5. Create a book and assign category/author.
-6. Login as Member.
-7. Borrow an available book.
-8. Confirm a pending payment appears for the borrowing.
-9. If the member returns before the due date, send an early return request.
-10. Login as Manager and process the requested return.
-11. Add a fine to a borrowing record.
-12. Update the borrowing payment if needed.
-13. Login as Admin and confirm records are view-only.
+4. Create a book and assign its category/authors.
+5. Sign up as a Member, or use the seeded member account.
+6. Borrow an available book with Cash and verify the pending reservation.
+7. Login as Manager and confirm the cash payment; verify the 14-day loan.
+8. As Member, request an early return; as Manager, process the request.
+9. With Stripe test configuration, check successful, cancelled and failed
+   card checkout without manager confirmation.
+10. Use the isolated payment test harness for overdue fines and expiry cases.
+    New fines are automatic; there is no manual fine creation.
+11. Verify unpaid fines block returns and cash/card settlement follows the
+    appropriate manager or Stripe flow.
+12. Login as Admin and verify catalog/payment records are view-only while
+    user credential and status management remains available.
+13. Check search, pagination, form dialogs and validation on desktop/mobile.
 
 ## Project Structure
 

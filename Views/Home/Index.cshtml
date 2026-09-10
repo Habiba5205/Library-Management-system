@@ -1,180 +1,109 @@
 @model Lib_System.ViewModels.DashboardViewModel
-
 @{
     ViewData["Title"] = "Dashboard";
+    var member = User.IsInRole("Member");
+    var manager = User.IsInRole("Manager");
 }
-
 <div class="page-header">
-    <div>
-        <h1>Library Dashboard</h1>
-        <p class="text-muted mb-0">Track catalog activity, borrowings, returns, and payments.</p>
-    </div>
-    <div class="page-actions">
-        @if (User.IsInRole("Member"))
-        {
-            <a asp-controller="Borrowing" asp-action="Create" class="btn btn-primary">Borrow Book</a>
-        }
-        @if (User.IsInRole("Manager"))
-        {
-            <a asp-controller="Book" asp-action="Create" class="btn btn-outline-primary">Add Book</a>
-        }
-    </div>
-</div>
-
-<div class="dashboard-grid mb-4">
-    <div class="summary-card">
-        <span class="summary-label">Books</span>
-        <strong>@Model.BookCount</strong>
-        <small>@Model.AvailableBookCount available</small>
-    </div>
-    @if (!User.IsInRole("Member"))
+    <h1>@(member ? $"Welcome back, {User.Identity?.Name}." : manager ? "Manager Dashboard" : "Administrator Dashboard")</h1>
+    @if (manager)
     {
-        <div class="summary-card">
-            <span class="summary-label">Members</span>
-            <strong>@Model.MemberCount</strong>
-            <small>registered members</small>
-        </div>
+        <a asp-controller="Book" asp-action="Create" class="btn btn-primary"><i data-lucide="plus" aria-hidden="true"></i>Add Book</a>
     }
-    <div class="summary-card">
-        <span class="summary-label">Active Borrowings</span>
-        <strong>@Model.ActiveBorrowingCount</strong>
-        <small>@Model.OverdueBorrowingCount overdue</small>
-    </div>
-    <div class="summary-card">
-        <span class="summary-label">Transactions</span>
-        <strong>@Model.PaymentCount</strong>
-        <small>@Model.TotalPaidAmount.ToUsd() paid, @Model.UnpaidFineCount unpaid fine(s)</small>
-    </div>
 </div>
-
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Recent Borrowings</h2>
-                <a asp-controller="Borrowing" asp-action="Index">View all</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Book</th>
-                            <th>Member</th>
-                            <th>Due</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var borrowing in Model.RecentBorrowings)
-                        {
-                            <tr>
-                                <td>@(borrowing.Book?.Title ?? "-")</td>
-                                <td>@(borrowing.User?.Name ?? "-")</td>
-                                <td>@(borrowing.Status is "Reserved" or "Failed" ? "-" : borrowing.DueDate.ToString("yyyy-MM-dd"))</td>
-                                <td>
-                                    <span class="badge bg-@(borrowing.Status == "Borrowed" ? "warning" : "success")">
-                                        @borrowing.Status
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                        @if (!Model.RecentBorrowings.Any())
-                        {
-                            <tr>
-                                <td colspan="4" class="text-muted">No borrowings yet.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-5">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Recent Payments</h2>
-                <a asp-controller="Payment" asp-action="Index">View all</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Member</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var payment in Model.RecentPayments)
-                        {
-                            <tr>
-                                <td>@(payment.Borrowing?.User?.Name ?? "-")</td>
-                                <td>@payment.Amount.ToUsd()</td>
-                                <td>
-                                    <span class="badge bg-@(payment.Status == "Paid" ? "success" : "secondary")">
-                                        @payment.Status
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                        @if (!Model.RecentPayments.Any())
-                        {
-                            <tr>
-                                <td colspan="3" class="text-muted">No payments yet.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-@if (User.IsInRole("Member"))
+@if (member && Model.OverdueBorrowingCount > 0)
 {
-    <div class="panel mt-4">
-        <div class="panel-header">
-            <h2>All Books</h2>
-            <a asp-controller="Book" asp-action="Index">Search &amp; filter</a>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var book in Model.Books)
-                    {
-                        <tr>
-                            <td>@book.Title</td>
-                            <td>@(book.Category?.Name ?? "-")</td>
-                            <td>
-                                <span class="badge bg-@(book.AvailabilityStatus == "Available" ? "success" : "secondary")">
-                                    @book.AvailabilityStatus
-                                </span>
-                            </td>
-                            <td>
-                                @if (book.AvailabilityStatus == "Available")
-                                {
-                                    <a asp-controller="Borrowing" asp-action="Create" asp-route-bookId="@book.BookId" class="btn btn-sm btn-primary">Borrow</a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                    @if (!Model.Books.Any())
-                    {
-                        <tr>
-                            <td colspan="4" class="text-muted">No books in the catalog yet.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+    <div class="alert alert-danger d-flex justify-content-between gap-3">
+        <span>@Model.OverdueBorrowingCount overdue book(s)</span>
+        <a asp-controller="Borrowing" asp-action="Index">View loans</a>
     </div>
+}
+@if (member && Model.UnpaidFineCount > 0)
+{
+    <div class="alert alert-warning d-flex justify-content-between gap-3">
+        <span>@Model.UnpaidFineCount unpaid fine(s)</span>
+        <a asp-controller="Fine" asp-action="Index">Pay fines</a>
+    </div>
+}
+<div class="dashboard-grid mb-4">
+    <a asp-controller="Book" asp-action="Index" class="summary-card">
+        <i data-lucide="book-open" aria-hidden="true"></i><span class="summary-label">@(member ? "Available Books" : "Total Books")</span>
+        <strong>@(member ? Model.AvailableBookCount : Model.BookCount)</strong>
+        <small>@(member ? $"of {Model.BookCount} in catalog" : $"{Model.AvailableBookCount} available")</small>
+    </a>
+    <a asp-controller="Borrowing" asp-action="Index" class="summary-card">
+        <i data-lucide="clipboard-list" aria-hidden="true"></i><span class="summary-label">Active Borrowings</span>
+        <strong>@Model.ActiveBorrowingCount</strong><small>@Model.OverdueBorrowingCount overdue</small>
+    </a>
+    <a asp-controller="Payment" asp-action="Index" class="summary-card">
+        <i data-lucide="credit-card" aria-hidden="true"></i><span class="summary-label">Transactions</span>
+        <strong>@Model.PaymentCount</strong><small>@Model.TotalPaidAmount.ToUsd() paid</small>
+    </a>
+    <a asp-controller="Fine" asp-action="Index" class="summary-card">
+        <i data-lucide="circle-alert" aria-hidden="true"></i><span class="summary-label">Unpaid Fines</span>
+        <strong>@Model.UnpaidFineCount</strong><small>outstanding fines</small>
+    </a>
+</div>
+@if (manager)
+{
+    <nav class="dashboard-shortcuts mb-4" aria-label="Quick actions">
+        <a asp-controller="Book" asp-action="Index"><i data-lucide="book-open" aria-hidden="true"></i>Manage Books</a>
+        <a asp-controller="Borrowing" asp-action="Index"><i data-lucide="clipboard-list" aria-hidden="true"></i>Borrowings</a>
+        <a asp-controller="Borrowing" asp-action="Index" asp-route-status="Early Return Requested"><i data-lucide="undo-2" aria-hidden="true"></i>Return Requests</a>
+        <a asp-controller="Payment" asp-action="Index" asp-route-status="Pending"><i data-lucide="banknote" aria-hidden="true"></i>Pending Payments</a>
+    </nav>
+}
+<div class="dashboard-columns">
+    <section class="activity-section">
+        <div class="panel-header">
+            <h2>@(member ? "My Recent Borrowings" : "Recent Borrowings")</h2>
+            <a asp-controller="Borrowing" asp-action="Index">View all</a>
+        </div>
+        @foreach (var borrowing in Model.RecentBorrowings)
+        {
+            <a asp-controller="Borrowing" asp-action="Details" asp-route-id="@borrowing.BorrowingId" class="activity-row">
+                <div><strong>@(borrowing.Book?.Title ?? "-")</strong>
+                    <small>@(member ? "" : borrowing.User?.Name) @(borrowing.Status is "Reserved" or "Failed" ? "" : $"Due {borrowing.DueDate:yyyy-MM-dd}")</small>
+                </div>
+                <span class="badge bg-@(borrowing.Status == "Failed" ? "danger" : borrowing.Status == "Returned" ? "success" : "warning")">@borrowing.Status</span>
+            </a>
+        }
+        @if (!Model.RecentBorrowings.Any())
+        {
+            <p class="empty-state">No borrowings yet.</p>
+        }
+    </section>
+    <section class="activity-section">
+    @if (member)
+    {
+        <div class="panel-header"><h2>Quick Actions</h2></div>
+        <a asp-controller="Book" asp-action="Index" class="quick-link"><i data-lucide="book-open" aria-hidden="true"></i><span>Browse available books<small>@Model.AvailableBookCount available</small></span><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+        <a asp-controller="Borrowing" asp-action="Index" class="quick-link"><i data-lucide="clipboard-list" aria-hidden="true"></i><span>View my borrowings<small>@Model.ActiveBorrowingCount active loans</small></span><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+        <a asp-controller="Payment" asp-action="Index" class="quick-link"><i data-lucide="credit-card" aria-hidden="true"></i><span>Payment history<small>@Model.PaymentCount transactions</small></span><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+        <a asp-controller="Fine" asp-action="Index" class="quick-link"><i data-lucide="circle-alert" aria-hidden="true"></i><span>My fines<small>@Model.UnpaidFineCount unpaid</small></span><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+    }
+    else
+    {
+        <div class="panel-header"><h2>Recent Payments</h2><a asp-controller="Payment" asp-action="Index">View all</a></div>
+        @foreach (var payment in Model.RecentPayments)
+        {
+            <a asp-controller="Payment" asp-action="Details" asp-route-id="@payment.PaymentId" class="activity-row">
+                <div><strong>@(payment.Borrowing?.User?.Name ?? "-")</strong><small>@(payment.Borrowing?.Book?.Title ?? "-")</small></div>
+                <div class="activity-amount"><strong>@payment.Amount.ToUsd()</strong><span class="badge bg-@(payment.Status == "Paid" ? "success" : payment.Status == "Failed" ? "danger" : "warning")">@payment.Status</span></div>
+            </a>
+        }
+        @if (!Model.RecentPayments.Any()) { <p class="empty-state">No payments yet.</p> }
+    }
+    </section>
+</div>
+@if (member)
+{
+    <section class="mt-4">
+        <div class="panel-header"><h2>All Books</h2><a asp-controller="Book" asp-action="Index">Search &amp; filter</a></div>
+        <partial name="_BookGrid" model="Model.Books" />
+    </section>
+}
+else
+{
+    <div class="dashboard-footer-metrics"><span><strong>@Model.BookCount</strong> Books in catalog</span><span><strong>@Model.MemberCount</strong> Total members</span><span><strong>@Model.TotalPaidAmount.ToUsd()</strong> Total paid</span></div>
 }
