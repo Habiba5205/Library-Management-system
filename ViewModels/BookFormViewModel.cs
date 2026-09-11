@@ -20,6 +20,9 @@ namespace Lib_System.ViewModels
         [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
         public bool HasCover { get; set; }
 
+    [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
+    public string? CoverImageUrl { get; set; }
+
         [Required]
         [StringLength(20)]
         [Display(Name = "ISBN")]

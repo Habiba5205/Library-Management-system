@@ -16,6 +16,9 @@ public class Book
 
     public byte[]? CoverImage { get; set; }
 
+    [StringLength(300)]
+    public string? CoverImageUrl { get; set; }
+
     [Range(1000, 9999)]
     public int PublicationYear { get; set; }
 

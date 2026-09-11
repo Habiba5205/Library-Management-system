@@ -1,5 +1,9 @@
 @model Lib_System.Models.Book
-@if (Model.CoverImage != null)
+@if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+{
+    <img class="uploaded-cover" src="@Model.CoverImageUrl" alt="Cover of @Model.Title" loading="lazy" />
+}
+else if (Model.CoverImage != null)
 {
     <img class="uploaded-cover" src="@Url.Action("Cover", "Book", new { id = Model.BookId })" alt="Cover of @Model.Title" loading="lazy" />
 }

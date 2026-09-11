@@ -63,6 +63,11 @@ namespace Lib_System.Services
                 ManagerId = vm.ManagerId
             };
 
+            if (!string.IsNullOrWhiteSpace(vm.CoverImageUrl))
+            {
+                book.CoverImageUrl = vm.CoverImageUrl;
+            }
+
             foreach (var authorId in vm.SelectedAuthorIds!)
             {
                 book.BookAuthors.Add(new BookAuthor { AuthorId = authorId });
@@ -105,6 +110,15 @@ namespace Lib_System.Services
             book.Title = vm.Title;
             if (vm.PreparedCover != null) book.CoverImage = vm.PreparedCover;
             else if (vm.RemoveCover) book.CoverImage = null;
+            // Update CoverImageUrl when provided or when removal requested
+            if (!string.IsNullOrEmpty(vm.CoverImageUrl))
+            {
+                book.CoverImageUrl = vm.CoverImageUrl;
+            }
+            else if (vm.RemoveCover)
+            {
+                book.CoverImageUrl = null;
+            }
             book.PublicationYear = vm.PublicationYear;
             book.Price = vm.Price;
             book.AvailabilityStatus = vm.AvailabilityStatus;
@@ -127,6 +141,15 @@ namespace Lib_System.Services
 
             await _bookRepository.SaveChangesAsync();
             return true;
+        }
+
+        // Allow updating cover URL when editing
+        public async Task SetCoverUrlAsync(int id, string? url)
+        {
+            var book = await _bookRepository.GetByIdAsync(id);
+            if (book == null) return;
+            book.CoverImageUrl = url;
+            await _bookRepository.SaveChangesAsync();
         }
 
         private async Task<string?> ValidateAvailabilityAsync(int id, string status)

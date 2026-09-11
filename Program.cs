@@ -9,6 +9,7 @@ using Lib_System.Repositories;
 using Lib_System.Repositories.Interfaces;
 using Lib_System.Services;
 using Lib_System.Services.Interfaces;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,35 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+
+// Workaround: some dev environments or compiled artifacts may request a specific
+// SixLabors.ImageSharp assembly version that isn't present. Attempt to resolve
+// SixLabors.ImageSharp at runtime by loading any available copy from the app folder
+// so reflection type scanning doesn't fail with ReflectionTypeLoadException.
+// This is a best-effort resolver; real fix is to ensure a single consistent
+// ImageSharp package version is referenced by all projects.
+System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += (context, name) =>
+{
+    try
+    {
+        if (!string.Equals(name.Name, "SixLabors.ImageSharp", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var baseDir = AppContext.BaseDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
+        var candidate = Path.Combine(baseDir, "SixLabors.ImageSharp.dll");
+        if (System.IO.File.Exists(candidate))
+        {
+            return context.LoadFromAssemblyPath(candidate);
+        }
+
+        // try to find any file named SixLabors.ImageSharp.dll in the bin
+        var found = Directory.EnumerateFiles(baseDir, "SixLabors.ImageSharp.dll", SearchOption.AllDirectories).FirstOrDefault();
+        if (!string.IsNullOrEmpty(found))
+            return context.LoadFromAssemblyPath(found);
+    }
+    catch { /* swallow - resolution is best-effort */ }
+    return null;
+};
 
 // Apply any pending EF Core migrations at startup so the database schema
 // matches the model (ensures tables such as Fines exist) and verify the
@@ -120,10 +150,24 @@ app.Use(async (context, next) =>
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+try
+{
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}")
+        .WithStaticAssets();
+}
+catch (ReflectionTypeLoadException ex)
+{
+    // Log loader exceptions for diagnosis then rethrow so the exception helper shows full context
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "ReflectionTypeLoadException while mapping controller routes");
+    foreach (var le in ex.LoaderExceptions ?? Array.Empty<Exception>())
+    {
+        logger.LogError(le, "LoaderException: {Message}", le.Message);
+    }
+    throw;
+}
 
 await SeedDefaultUsersAsync(app.Services);
 

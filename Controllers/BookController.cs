@@ -12,10 +12,12 @@ namespace Lib_System.Controllers
     public class BookController : Controller
     {
         private readonly IBookService _bookService;
+        private readonly IWebHostEnvironment _env;
 
-        public BookController(IBookService bookService)
+        public BookController(IBookService bookService, IWebHostEnvironment env)
         {
             _bookService = bookService;
+            _env = env;
         }
 
         [Authorize(Roles = "Admin,Manager,Member")]
@@ -47,6 +49,10 @@ namespace Lib_System.Controllers
                 return Forbid();
             }
 
+            // Provide a return URL so the Details view can navigate back to the caller.
+            var referer = Request.Headers["Referer"].ToString();
+            ViewData["ReturnUrl"] = !string.IsNullOrEmpty(referer) ? referer : Url.Action("Index");
+
             return View(book);
         }
 
@@ -63,7 +69,18 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(BookFormViewModel vm)
         {
-            await PrepareCoverAsync(vm);
+            // Handle cover upload if provided
+            if (vm.CoverUpload != null && vm.CoverUpload.Length > 0 && !vm.RemoveCover)
+            {
+                try
+                {
+                    vm.CoverImageUrl = await SaveCoverFileAsync(vm.CoverUpload);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(nameof(vm.CoverUpload), ex.Message);
+                }
+            }
             // Always the logged-in manager - never trust a ManagerId posted from the form.
             vm.ManagerId = GetCurrentUserId();
 
@@ -94,7 +111,8 @@ namespace Lib_System.Controllers
             var vm = new BookFormViewModel
             {
                 BookId = book.BookId,
-                HasCover = book.CoverImage != null,
+                HasCover = !string.IsNullOrEmpty(book.CoverImageUrl) || book.CoverImage != null,
+                CoverImageUrl = book.CoverImageUrl,
                 ISBN = book.ISBN,
                 Title = book.Title,
                 PublicationYear = book.PublicationYear,
@@ -119,8 +137,27 @@ namespace Lib_System.Controllers
 
             var currentBook = await _bookService.GetForEditAsync(id);
             if (currentBook == null) return NotFound();
-            vm.HasCover = currentBook.CoverImage != null;
-            await PrepareCoverAsync(vm);
+
+            // Keep track of the previous cover URL (if any) so we can delete the file after a successful update.
+            string? previousCover = currentBook.CoverImageUrl;
+            vm.HasCover = !string.IsNullOrEmpty(previousCover) || currentBook.CoverImage != null;
+
+            // Handle cover removal or replacement. Save replacement files immediately so the service gets the new URL.
+            if (vm.RemoveCover)
+            {
+                vm.CoverImageUrl = null;
+            }
+            else if (vm.CoverUpload != null && vm.CoverUpload.Length > 0)
+            {
+                try
+                {
+                    vm.CoverImageUrl = await SaveCoverFileAsync(vm.CoverUpload);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(nameof(vm.CoverUpload), ex.Message);
+                }
+            }
 
             var validation = await _bookService.ValidateForEditAsync(id, vm);
             foreach (var error in validation.Errors)
@@ -148,6 +185,13 @@ namespace Lib_System.Controllers
                 }
 
                 if (!updated) return NotFound();
+
+                // If a previous cover existed and the URL changed (replacement or removal), delete the old file.
+                if (!string.IsNullOrEmpty(previousCover) && previousCover != vm.CoverImageUrl)
+                {
+                    TryDeleteCoverFile(previousCover);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -236,6 +280,52 @@ namespace Lib_System.Controllers
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(value, out var userId) ? userId : 0;
+        }
+
+        private async Task<string> SaveCoverFileAsync(IFormFile file)
+        {
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext)) throw new InvalidOperationException("Unsupported image format.");
+
+            // Use the BookCoverProcessor to normalize/resize and encode as PNG.
+            byte[] imageBytes;
+            try
+            {
+                imageBytes = await Lib_System.Services.BookCoverProcessor.PrepareAsync(file);
+            }
+            catch
+            {
+                // Fall back to saving the original stream if processing fails for any reason.
+                var fallbackName = $"{Guid.NewGuid()}{ext}";
+                var fallbackPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "images", "covers", fallbackName);
+                Directory.CreateDirectory(Path.GetDirectoryName(fallbackPath) ?? "");
+                using (var stream = System.IO.File.Create(fallbackPath))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                return $"/images/covers/{fallbackName}";
+            }
+
+            var uploads = Path.Combine(_env.WebRootPath ?? "wwwroot", "images", "covers");
+            Directory.CreateDirectory(uploads);
+            var outName = $"{Guid.NewGuid()}.png";
+            var outFull = Path.Combine(uploads, outName);
+            await System.IO.File.WriteAllBytesAsync(outFull, imageBytes);
+            return $"/images/covers/{outName}";
+        }
+
+        private void TryDeleteCoverFile(string? url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url)) return;
+                // url expected like /images/covers/<file>
+                var name = url.Replace("/", Path.DirectorySeparatorChar.ToString()).TrimStart(Path.DirectorySeparatorChar);
+                var full = Path.Combine(_env.WebRootPath ?? "wwwroot", name);
+                if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+            }
+            catch { /* best effort only */ }
         }
     }
 }
