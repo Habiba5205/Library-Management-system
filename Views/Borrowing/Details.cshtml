@@ -9,7 +9,10 @@
 <div>
     <dl class="row">
         <dt class="col-sm-3">Book</dt>
-        <dd class="col-sm-9">@Model.Book?.Title</dd>
+        <dd class="col-sm-9">
+            @if (Model.Book != null) { <span class="table-book-cover"><partial name="_CoverImage" model="Model.Book" /></span> }
+            @Model.Book?.Title
+        </dd>
 
         <dt class="col-sm-3">ISBN</dt>
         <dd class="col-sm-9">@Model.Book?.ISBN</dd>

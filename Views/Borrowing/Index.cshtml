@@ -39,7 +39,9 @@
         var payment = item.Payments.OrderByDescending(p => p.PaymentId).FirstOrDefault();
         var isOverdue = item.Status == "Borrowed" && item.DueDate.Date < DateTime.Today;
         <div class="borrowing-card @(isOverdue ? "borrowing-card-overdue" : "")">
-            <div class="borrowing-card-cover" aria-hidden="true"><i data-lucide="book-open" aria-hidden="true"></i></div>
+            <div class="borrowing-card-cover">
+                @if (item.Book != null) { <partial name="_CoverImage" model="item.Book" /> }
+            </div>
             <div class="borrowing-card-body">
                 <div class="borrowing-card-top">
                     <h2>@(item.Book?.Title ?? "-")</h2>

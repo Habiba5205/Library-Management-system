@@ -63,6 +63,7 @@ namespace Lib_System.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(BookFormViewModel vm)
         {
+            await PrepareCoverAsync(vm);
             // Always the logged-in manager - never trust a ManagerId posted from the form.
             vm.ManagerId = GetCurrentUserId();
 
@@ -93,6 +94,7 @@ namespace Lib_System.Controllers
             var vm = new BookFormViewModel
             {
                 BookId = book.BookId,
+                HasCover = book.CoverImage != null,
                 ISBN = book.ISBN,
                 Title = book.Title,
                 PublicationYear = book.PublicationYear,
@@ -114,6 +116,11 @@ namespace Lib_System.Controllers
         public async Task<IActionResult> Edit(int id, BookFormViewModel vm)
         {
             if (id != vm.BookId) return NotFound();
+
+            var currentBook = await _bookService.GetForEditAsync(id);
+            if (currentBook == null) return NotFound();
+            vm.HasCover = currentBook.CoverImage != null;
+            await PrepareCoverAsync(vm);
 
             var validation = await _bookService.ValidateForEditAsync(id, vm);
             foreach (var error in validation.Errors)
@@ -195,6 +202,34 @@ namespace Lib_System.Controllers
             vm.Categories = new SelectList(categories, "CategoryId", "Name", vm.CategoryId);
 
             vm.AllAuthors = await _bookService.GetAllAuthorsAsync();
+        }
+
+        [Authorize(Roles = "Admin,Manager,Member")]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<IActionResult> Cover(int id)
+        {
+            var book = await _bookService.GetForEditAsync(id);
+            if (book?.CoverImage == null) return NotFound();
+            Response.Headers.XContentTypeOptions = "nosniff";
+            return File(book.CoverImage, "image/png");
+        }
+
+        private async Task PrepareCoverAsync(BookFormViewModel vm)
+        {
+            if (vm.CoverUpload == null) return;
+            if (vm.RemoveCover)
+            {
+                ModelState.AddModelError(nameof(vm.CoverUpload), "Choose either a replacement image or removal of the current cover.");
+                return;
+            }
+            try
+            {
+                vm.PreparedCover = await Lib_System.Services.BookCoverProcessor.PrepareAsync(vm.CoverUpload);
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(nameof(vm.CoverUpload), ex.Message);
+            }
         }
 
         private int GetCurrentUserId()

@@ -4,8 +4,8 @@
 {
     <article class="catalog-book" data-category="@book.CategoryId">
         <a asp-controller="Book" asp-action="Details" asp-route-id="@book.BookId" class="book-cover cover-@(book.BookId % 6)" aria-label="View @book.Title">
-            <i data-lucide="book-open" aria-hidden="true"></i>
-            <span class="cover-title">@book.Title</span>
+            <partial name="_CoverImage" model="book" />
+            @if (book.CoverImage == null) { <span class="cover-title">@book.Title</span> }
             <span class="badge bg-@(book.AvailabilityStatus == "Available" ? "success" : "secondary")">@book.AvailabilityStatus</span>
         </a>
         <h2>@book.Title</h2>

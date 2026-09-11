@@ -8,6 +8,18 @@ namespace Lib_System.ViewModels
     {
         public int BookId { get; set; }
 
+        [Display(Name = "Book Cover")]
+        public IFormFile? CoverUpload { get; set; }
+
+        [Display(Name = "Remove current cover")]
+        public bool RemoveCover { get; set; }
+
+        [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
+        public byte[]? PreparedCover { get; set; }
+
+        [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
+        public bool HasCover { get; set; }
+
         [Required]
         [StringLength(20)]
         [Display(Name = "ISBN")]

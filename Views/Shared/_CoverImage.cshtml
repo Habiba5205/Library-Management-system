@@ -1,0 +1,9 @@
+@model Lib_System.Models.Book
+@if (Model.CoverImage != null)
+{
+    <img class="uploaded-cover" src="@Url.Action("Cover", "Book", new { id = Model.BookId })" alt="Cover of @Model.Title" loading="lazy" />
+}
+else
+{
+    <i data-lucide="book-open" aria-hidden="true"></i>
+}

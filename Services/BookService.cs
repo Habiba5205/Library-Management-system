@@ -55,6 +55,7 @@ namespace Lib_System.Services
             {
                 ISBN = vm.ISBN,
                 Title = vm.Title,
+                CoverImage = vm.PreparedCover,
                 PublicationYear = vm.PublicationYear,
                 Price = vm.Price,
                 AvailabilityStatus = "Available",
@@ -102,6 +103,8 @@ namespace Lib_System.Services
 
             book.ISBN = vm.ISBN;
             book.Title = vm.Title;
+            if (vm.PreparedCover != null) book.CoverImage = vm.PreparedCover;
+            else if (vm.RemoveCover) book.CoverImage = null;
             book.PublicationYear = vm.PublicationYear;
             book.Price = vm.Price;
             book.AvailabilityStatus = vm.AvailabilityStatus;

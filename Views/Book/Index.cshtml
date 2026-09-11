@@ -55,7 +55,7 @@ else
 {
         <tr>
             <td class="book-row-cell">
-                <span class="table-book-cover" aria-hidden="true"><i data-lucide="book-open" aria-hidden="true"></i></span>
+                <span class="table-book-cover"><partial name="_CoverImage" model="item" /></span>
                 <span>
                     <strong>@item.Title</strong>
                     <small>@string.Join(", ", item.BookAuthors.Select(ba => ba.Author?.Name))</small>

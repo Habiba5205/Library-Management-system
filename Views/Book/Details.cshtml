@@ -9,8 +9,8 @@
 <div class="book-detail">
     <div class="book-detail-cover">
         <div class="book-cover cover-@(Model.BookId % 6)">
-            <i data-lucide="book-open" aria-hidden="true"></i>
-            <span class="cover-title">@Model.Title</span>
+            <partial name="_CoverImage" model="Model" />
+            @if (Model.CoverImage == null) { <span class="cover-title">@Model.Title</span> }
             <span class="badge bg-@(Model.AvailabilityStatus == "Available" ? "success" : "secondary")">@Model.AvailabilityStatus</span>
         </div>
     </div>

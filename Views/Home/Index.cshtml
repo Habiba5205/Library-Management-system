@@ -91,6 +91,7 @@
         @foreach (var borrowing in Model.RecentBorrowings)
         {
             <a asp-controller="Borrowing" asp-action="Details" asp-route-id="@borrowing.BorrowingId" class="activity-row">
+                @if (borrowing.Book != null) { <span class="table-book-cover"><partial name="_CoverImage" model="borrowing.Book" /></span> }
                 <div><strong>@(borrowing.Book?.Title ?? "-")</strong>
                     <small>@(member ? "" : borrowing.User?.Name) @(borrowing.Status is "Reserved" or "Failed" ? "" : $"Due {borrowing.DueDate:yyyy-MM-dd}")</small>
                 </div>

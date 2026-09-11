@@ -1,4 +1,12 @@
 @font-face { font-family: Inter; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/inter-latin.woff2') format('woff2'); }
+.uploaded-cover { display: block; width: 100%; height: 100%; object-fit: contain; }
+.book-cover:has(.uploaded-cover) { padding: 0; overflow: hidden; background: #f3f4f6; }
+.book-cover > .uploaded-cover { position: absolute; inset: 0; }
+.table-book-cover { display: inline-flex; width: 36px; height: 48px; flex-shrink: 0; vertical-align: middle; overflow: hidden; }
+.table-book-cover .uploaded-cover { object-fit: contain; }
+.cover-preview { width: 120px; height: 160px; object-fit: contain; display: block; margin-top: 12px; background: #f3f4f6; border-radius: 6px; }
+.cover-preview[hidden] { display: none; }
+.cover-client-error:empty { display: none; }
 :root {
   --brand: #0d9488;
   --brand-dark: #0f766e;

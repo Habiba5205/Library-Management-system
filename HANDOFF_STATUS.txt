@@ -1,6 +1,20 @@
 Library Management System MVC - Handoff Status
 
-LATEST UPDATE - 2026-09-10
+LATEST UPDATE - 2026-09-11
+Optional book covers:
+- Manager Create/Edit forms support multipart uploads and client previews.
+- JPG/PNG/WebP up to 5 MB, decoded and dimension-limited on the server.
+- ImageSharp 3.1.12 resizes covers and re-encodes them as PNG without metadata.
+- AddBookCoverImage adds nullable image bytes on Books. No upload files to
+  synchronize or clean up; the cover is saved/removed with the book record.
+- Authenticated users see covers in catalog, book details, staff book lists,
+  dashboard activity and borrowing cards/details. Existing books use icons.
+- Replacement/removal supported; no-upload edits preserve existing covers.
+- 17 validation/persistence tests pass in Tests/BookCovers.
+- Current cover preview: http://localhost:5147. Browser visual/preview
+  verification still pending. Apply migrations after pulling this update.
+
+PREVIOUS UPDATE - 2026-09-10
 English copy review: corrected sign-in/registration wording, early-return
 messages, cash confirmation questions and password confirmation validation.
 Stored statuses, database content and business rules are unchanged.

@@ -6,7 +6,7 @@ This project was built as an MVC application, not a Web API. The frontend uses R
 
 ## Current Preview
 
-Open **http://localhost:5146** for the current local design preview.
+Open **http://localhost:5147** for the current local design preview.
 The default launch profile still uses port 5137; an older process on that
 port may show an earlier build. Preview servers run only while their process
 is active.
@@ -17,6 +17,7 @@ is active.
 - Locally hosted Inter font, Lucide icons and field-specific placeholders.
 - Dashboard activity lists and role-specific shortcuts.
 - Member book grid with placeholders when cover images are unavailable.
+- Managers can upload, replace or remove book covers, with a preview before saving.
 - Staff tables with search, 10/25/50-row client-side pagination and icon actions.
 - Hover/focus tooltips, row highlighting, button loading states and
   client-side duplicate-submit guards.
@@ -174,6 +175,31 @@ The project follows the MVC pattern with a Service-Repository layer:
 
 ## Database
 
+### Book Covers
+
+Optional covers accept JPG, PNG or WebP files up to 5 MB. The server decodes
+the image, rejects dimensions above 6,000 pixels per side or 16 megapixels,
+and resizes it to fit within 900 x 1,200 pixels. Metadata is discarded and
+the image is saved as PNG data in the book's database record.
+
+The `AddBookCoverImage` migration adds a nullable column; existing books keep
+their placeholders. Covers are available to authenticated library users.
+Editing without a new upload preserves the current cover. Select either a
+replacement file or removal, not both. After a server-side validation error,
+select the upload again before resubmitting.
+
+Database backups include covers. Git pulls do not sync uploaded images or
+other local database records between laptops.
+
+Image processing uses [ImageSharp 3.1.12](https://www.nuget.org/packages/SixLabors.ImageSharp/3.1.12).
+Review its linked license before commercial distribution.
+
+Run validation and persistence tests (uses a temporary LocalDB database):
+
+```powershell
+dotnet run --project Tests/BookCovers/BookCovers.csproj
+```
+
 Each device has its own LocalDB database. Git pulls share code and
 migrations, not books or other records added on a teammate's device.
 
@@ -233,13 +259,13 @@ dotnet tool run dotnet-ef database update
 5. Run the application:
 
 ```powershell
-dotnet run --project Lib_System.csproj --launch-profile http --urls http://localhost:5146
+dotnet run --project Lib_System.csproj --launch-profile http --urls http://localhost:5147
 ```
 
 6. Open the browser:
 
 ```text
-http://localhost:5146
+http://localhost:5147
 ```
 
 If the folder contains both a project file and a solution file, build the project directly:
@@ -248,7 +274,7 @@ If the folder contains both a project file and a solution file, build the projec
 dotnet build Lib_System.csproj
 ```
 
-The app also applies pending migrations at startup. If port 5146 is already
+The app also applies pending migrations at startup. If port 5147 is already
 occupied by the preview, use it directly or choose another free port.
 Running without `--urls` uses the default profile URL, http://localhost:5137.
 
@@ -267,7 +293,7 @@ dotnet user-secrets set "Stripe:PublishableKey" "pk_test_YOUR_KEY" --project Lib
 With the Stripe CLI installed and authenticated, forward local events:
 
 ```powershell
-stripe listen --forward-to http://localhost:5146/stripe/webhook
+stripe listen --forward-to http://localhost:5147/stripe/webhook
 ```
 
 Store the signing secret printed by that command, then restart the app:

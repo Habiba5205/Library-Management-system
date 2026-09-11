@@ -14,6 +14,8 @@ public class Book
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
 
+    public byte[]? CoverImage { get; set; }
+
     [Range(1000, 9999)]
     public int PublicationYear { get; set; }
 
@@ -36,4 +38,3 @@ public class Book
 
     public ICollection<Borrowing> Borrowings { get; set; } = new List<Borrowing>();
 }
-

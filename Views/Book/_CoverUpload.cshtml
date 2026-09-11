@@ -1,0 +1,16 @@
+@model Lib_System.ViewModels.BookFormViewModel
+<div class="form-group mb-3 cover-upload">
+    <label asp-for="CoverUpload" class="control-label"></label>
+    <input asp-for="CoverUpload" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-describedby="cover-hint" />
+    <small id="cover-hint" class="text-muted">Optional. JPG, PNG, or WebP, up to 5 MB.</small>
+    <span asp-validation-for="CoverUpload" class="text-danger"></span>
+    <p class="cover-client-error text-danger" role="alert"></p>
+    <img class="cover-preview" src="@(Model.HasCover ? Url.Action("Cover", "Book", new { id = Model.BookId }) : null)" alt="Book cover preview" hidden="@(!Model.HasCover)" data-original="@(Model.HasCover ? Url.Action("Cover", "Book", new { id = Model.BookId }) : "")" />
+    @if (Model.HasCover)
+    {
+        <div class="form-check mt-2">
+            <input asp-for="RemoveCover" class="form-check-input" />
+            <label asp-for="RemoveCover" class="form-check-label"></label>
+        </div>
+    }
+</div>
