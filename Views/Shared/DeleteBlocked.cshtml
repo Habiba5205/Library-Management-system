@@ -1,0 +1,37 @@
+@model dynamic
+
+@{
+    ViewData["Title"] = "Cannot delete";
+    var message = ViewData["DeleteBlockedMessage"] as string ?? "This item cannot be deleted because related records exist.";
+    var t = Model?.GetType();
+    var idProp = t?.GetProperty("BookId") ?? t?.GetProperty("AuthorId") ?? t?.GetProperty("CategoryId");
+    var idValue = idProp != null ? idProp.GetValue(Model) : null;
+    var titleProp = t?.GetProperty("Title") ?? t?.GetProperty("Name") ?? t?.GetProperty("Email");
+    var titleValue = titleProp != null ? titleProp.GetValue(Model) : null;
+}
+
+<h1>Deletion blocked</h1>
+
+<div class="alert alert-warning">
+    <p>@message</p>
+</div>
+
+<div class="mb-3">
+    <dl class="row">
+        @if (titleValue != null)
+        {
+            <dt class="col-sm-3">Item</dt>
+            <dd class="col-sm-9">@titleValue</dd>
+        }
+        <dt class="col-sm-3">Type</dt>
+        <dd class="col-sm-9">@Model?.GetType().Name</dd>
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="id" value="@idValue" />
+    <button type="submit" class="btn btn-danger" disabled>Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+<p class="text-muted mt-3">If you believe this is an error, review related items and try again.</p>

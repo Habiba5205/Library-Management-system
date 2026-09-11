@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 
 namespace Lib_System.Controllers
@@ -169,14 +170,23 @@ namespace Lib_System.Controllers
             var result = await _bookService.DeleteAsync(id);
             if (!result.Success)
             {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Field, error.Message);
-                }
-                return View("Delete", book);
+                TempData["DeleteBlockedMessage"] = string.Join(" ", result.Errors.Select(e => e.Message));
+                return RedirectToAction("DeleteBlocked", new { id });
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> DeleteBlocked(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var book = await _bookService.GetForDeleteAsync(id.Value);
+            if (book == null) return NotFound();
+
+            ViewData["DeleteBlockedMessage"] = TempData["DeleteBlockedMessage"] as string;
+            return View("~/Views/Shared/DeleteBlocked.cshtml", book);
         }
 
         private async Task PopulateDropdownsAsync(BookFormViewModel vm)

@@ -7,7 +7,7 @@
 <h1>Payment Details</h1>
 @if (TempData["PaymentMessage"] is string message)
 {
-    <p class="alert alert-info">@message</p>
+    <p class="alert alert-info toast">@message</p>
 }
 @if (Model.Status == "Pending" && Model.PaymentMethod == "Cash" && Model.Borrowing?.Status == "Reserved")
 {

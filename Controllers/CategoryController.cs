@@ -3,6 +3,7 @@ using Lib_System.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Lib_System.Controllers
 {
@@ -107,14 +108,23 @@ namespace Lib_System.Controllers
             var result = await _categoryService.DeleteAsync(id);
             if (!result.Success)
             {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Field, error.Message);
-                }
-                return View("Delete", category);
+                TempData["DeleteBlockedMessage"] = string.Join(" ", result.Errors.Select(e => e.Message));
+                return RedirectToAction("DeleteBlocked", new { id });
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> DeleteBlocked(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var category = await _categoryService.GetForDeleteAsync(id.Value);
+            if (category == null) return NotFound();
+
+            ViewData["DeleteBlockedMessage"] = TempData["DeleteBlockedMessage"] as string;
+            return View("~/Views/Shared/DeleteBlocked.cshtml", category);
         }
     }
 }

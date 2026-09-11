@@ -20,21 +20,21 @@
 
             <div class="form-group mb-3">
                 <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" placeholder="you@example.com" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+                <input asp-for="Email" class="form-control" readonly />
+                <small class="form-text text-muted">Email can't be changed here.</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Password" class="control-label"></label>
+                <input asp-for="Password" class="form-control" placeholder="Leave blank to keep current password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <small class="form-text text-muted">Enter a new password to change it; leave blank to keep the existing password.</small>
             </div>
 
             <div class="form-group mb-3">
                 <label asp-for="Username" class="control-label"></label>
                 <input asp-for="Username" class="form-control" placeholder="Enter username" />
                 <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" placeholder="Enter new password (optional)" type="password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-                <small class="form-text text-muted">Leave blank to keep the current password.</small>
             </div>
 
             <div class="form-group mb-3">
@@ -57,21 +57,15 @@
                 <span asp-validation-for="RoleId" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Status" class="control-label"></label>
-                <select asp-for="Status" class="form-select">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Suspended">Suspended</option>
-                </select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
                 <a asp-action="Index" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
+
+        <hr class="my-4" />
+        <p class="text-muted mb-2">Account status is managed separately from profile details.</p>
+        <a asp-action="Deactivate" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">Change Account Status</a>
     </div>
 </div>
 

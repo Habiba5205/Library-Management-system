@@ -11,7 +11,7 @@
 
             @if (TempData["SuccessMessage"] is string successMessage)
             {
-                <div class="alert alert-success">@successMessage</div>
+                <div class="alert alert-success toast">@successMessage</div>
             }
 
             <form asp-action="Login" method="post">
@@ -38,6 +38,22 @@
                 <button type="submit" class="btn btn-primary w-100">Sign in<i data-lucide="arrow-right" aria-hidden="true"></i></button>
             </form>
 
+            <div class="demo-access">
+                <p class="demo-access-label">Quick demo access</p>
+                <button type="button" class="demo-account" data-username="admin" data-password="Admin@123">
+                    <span class="avatar">AS</span>
+                    <span><strong>Admin - Admin Supervisor</strong><small>admin@library.local</small></span>
+                </button>
+                <button type="button" class="demo-account" data-username="manager" data-password="Manager@123">
+                    <span class="avatar">LM</span>
+                    <span><strong>Manager - Library Manager</strong><small>manager@library.local</small></span>
+                </button>
+                <button type="button" class="demo-account" data-username="member" data-password="Member@123">
+                    <span class="avatar">LM</span>
+                    <span><strong>Member - Library Member</strong><small>member@library.local</small></span>
+                </button>
+            </div>
+
             <div class="mt-3 text-center">
                 <a asp-action="Register">Create a member account</a>
             </div>
@@ -48,4 +64,14 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.querySelectorAll('.demo-account').forEach(button => {
+            button.addEventListener('click', () => {
+                const form = button.closest('.panel').querySelector('form');
+                form.querySelector('[name="UsernameOrEmail"]').value = button.dataset.username;
+                form.querySelector('[name="Password"]').value = button.dataset.password;
+                form.querySelector('[name="Password"]').focus();
+            });
+        });
+    </script>
 }

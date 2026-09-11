@@ -80,9 +80,9 @@ namespace Lib_System.Controllers
                 Username = user.Username,
                 Phone = user.Phone,
                 Address = user.Address,
-                Status = user.Status,
                 RoleId = user.RoleId
-                // Password intentionally left blank - it means "keep current password" on submit.
+                // Email and Password are not editable through this form - see Edit.cshtml.
+                // Status is deliberately not editable here - use Deactivate/Reactivate for that.
             };
 
             await PopulateRolesAsync(vm);

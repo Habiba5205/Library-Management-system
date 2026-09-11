@@ -35,14 +35,17 @@
         <i data-lucide="clipboard-list" aria-hidden="true"></i><span class="summary-label">Active Borrowings</span>
         <strong>@Model.ActiveBorrowingCount</strong><small>@Model.OverdueBorrowingCount overdue</small>
     </a>
-    <a asp-controller="Payment" asp-action="Index" class="summary-card">
-        <i data-lucide="credit-card" aria-hidden="true"></i><span class="summary-label">Transactions</span>
-        <strong>@Model.PaymentCount</strong><small>@Model.TotalPaidAmount.ToUsd() paid</small>
-    </a>
-    <a asp-controller="Fine" asp-action="Index" class="summary-card">
-        <i data-lucide="circle-alert" aria-hidden="true"></i><span class="summary-label">Unpaid Fines</span>
-        <strong>@Model.UnpaidFineCount</strong><small>outstanding fines</small>
-    </a>
+    @if (!member)
+    {
+        <a asp-controller="Payment" asp-action="Index" class="summary-card">
+            <i data-lucide="credit-card" aria-hidden="true"></i><span class="summary-label">Transactions</span>
+            <strong>@Model.PaymentCount</strong><small>@Model.TotalPaidAmount.ToUsd() paid</small>
+        </a>
+        <a asp-controller="Fine" asp-action="Index" class="summary-card">
+            <i data-lucide="circle-alert" aria-hidden="true"></i><span class="summary-label">Unpaid Fines</span>
+            <strong>@Model.UnpaidFineCount</strong><small>outstanding fines</small>
+        </a>
+    }
 </div>
 @if (manager)
 {
@@ -52,6 +55,32 @@
         <a asp-controller="Borrowing" asp-action="Index" asp-route-status="Early Return Requested"><i data-lucide="undo-2" aria-hidden="true"></i>Return Requests</a>
         <a asp-controller="Payment" asp-action="Index" asp-route-status="Pending"><i data-lucide="banknote" aria-hidden="true"></i>Pending Payments</a>
     </nav>
+}
+@if (member)
+{
+    var categories = Model.Books.Where(b => b.Category != null).Select(b => b.Category!)
+        .GroupBy(c => c.CategoryId).Select(g => g.First()).OrderBy(c => c.Name).ToList();
+    <section class="mb-4" id="dashboard-book-grid">
+        <div class="panel-header"><h2>All Books</h2><a asp-controller="Book" asp-action="Index">Advanced search</a></div>
+        <form asp-controller="Book" asp-action="Index" method="get" class="row g-2 mb-3">
+            <div class="col-auto" style="min-width: 240px;">
+                <input type="search" name="searchString" class="form-control" placeholder="Search by title or author..." aria-label="Search by title or author" />
+            </div>
+            <div class="col-auto">
+                <select name="categoryId" class="form-select" aria-label="Filter by category">
+                    <option value="">All categories</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.CategoryId">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </div>
+        </form>
+        <partial name="_BookGrid" model="Model.Books" />
+    </section>
 }
 <div class="dashboard-columns">
     <section class="activity-section">
@@ -96,14 +125,31 @@
     }
     </section>
 </div>
-@if (member)
-{
-    <section class="mt-4">
-        <div class="panel-header"><h2>All Books</h2><a asp-controller="Book" asp-action="Index">Search &amp; filter</a></div>
-        <partial name="_BookGrid" model="Model.Books" />
-    </section>
-}
-else
+@if (!member)
 {
     <div class="dashboard-footer-metrics"><span><strong>@Model.BookCount</strong> Books in catalog</span><span><strong>@Model.MemberCount</strong> Total members</span><span><strong>@Model.TotalPaidAmount.ToUsd()</strong> Total paid</span></div>
+}
+
+@section Scripts {
+    @if (member)
+    {
+        <script>
+            (function () {
+                const search = document.getElementById('dashboard-book-search');
+                const categorySelect = document.getElementById('dashboard-book-category');
+                const cards = document.querySelectorAll('#dashboard-book-grid .catalog-book');
+                function applyFilter() {
+                    const query = (search?.value || '').trim().toLocaleLowerCase();
+                    const categoryId = categorySelect?.value || '';
+                    cards.forEach(card => {
+                        const matchesText = !query || card.textContent.toLocaleLowerCase().includes(query);
+                        const matchesCategory = !categoryId || card.dataset.category === categoryId;
+                        card.hidden = !(matchesText && matchesCategory);
+                    });
+                }
+                search?.addEventListener('input', applyFilter);
+                categorySelect?.addEventListener('change', applyFilter);
+            })();
+        </script>
+    }
 }

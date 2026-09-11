@@ -38,7 +38,7 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="BookId" />
-    <input type="submit" value="Delete" class="btn btn-danger" disabled="@(hasBorrowings || protectedStatus ? "disabled" : null)" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@((hasBorrowings || protectedStatus || !ViewData.ModelState.IsValid) ? "disabled" : null)" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 

@@ -71,8 +71,11 @@
         {
             <aside class="auth-brand-panel">
                 <a asp-controller="Home" asp-action="Index" class="brand"><span class="brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span>Librarium</a>
-                <div class="auth-brand-heading"><h2>Your library,<br />managed with clarity.</h2></div>
-                <img src="~/images/library.jpg" alt="Bookshelves inside a library" class="library-photo" />
+                <div class="auth-brand-heading">
+                    <h2>Your library,<br />managed with clarity.</h2>
+                    <p class="auth-caption">A complete system for managing books, members, borrowings, and payments - built for daily library operations.</p>
+                </div>
+                <vc:library-stats />
             </aside>
         }
         <main id="main-content" class="@(signedIn ? "page-content" : "auth-content")" tabindex="-1">

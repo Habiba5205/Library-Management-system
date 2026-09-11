@@ -37,10 +37,6 @@ namespace Lib_System.ViewModels
         public string? Address { get; set; }
 
         [Required]
-        [StringLength(30)]
-        public string Status { get; set; } = "Active";
-
-        [Required]
         [Display(Name = "Role")]
         public int RoleId { get; set; }
 

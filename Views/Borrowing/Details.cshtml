@@ -53,11 +53,45 @@
             </span>
         </dd>
 
-        <dt class="col-sm-3">Payments</dt>
-        <dd class="col-sm-9">@Model.Payments.Count</dd>
+        <dt class="col-sm-3">Payment</dt>
+        <dd class="col-sm-9">
+            @if (Model.Payments.Any())
+            {
+                <ul class="detail-sublist">
+                    @foreach (var payment in Model.Payments.OrderByDescending(p => p.PaymentId))
+                    {
+                        <li>
+                            <a asp-controller="Payment" asp-action="Details" asp-route-id="@payment.PaymentId">@payment.PaymentMethod - @payment.Amount.ToUsd()</a>
+                            <span class="badge bg-@(payment.Status == "Paid" ? "success" : payment.Status == "Failed" ? "danger" : "warning")">@payment.Status</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <em>No payment recorded</em>
+            }
+        </dd>
 
         <dt class="col-sm-3">Fines</dt>
-        <dd class="col-sm-9">@Model.Fines.Count</dd>
+        <dd class="col-sm-9">
+            @if (Model.Fines.Any())
+            {
+                <ul class="detail-sublist">
+                    @foreach (var fine in Model.Fines.OrderByDescending(f => f.FineId))
+                    {
+                        <li>
+                            <a asp-controller="Fine" asp-action="Details" asp-route-id="@fine.FineId">@fine.Amount.ToUsd() - @fine.Reason</a>
+                            <span class="badge bg-@(fine.Status == "Paid" ? "success" : "danger")">@fine.Status</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <em>No fines</em>
+            }
+        </dd>
     </dl>
 </div>
 

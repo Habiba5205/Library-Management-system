@@ -57,7 +57,7 @@ namespace Lib_System.Services
                 Username = vm.Username,
                 Phone = vm.Phone,
                 Address = vm.Address,
-                Status = vm.Status,
+                Status = "Active",
                 RoleId = vm.RoleId,
                 RegistrationDate = DateTime.Today,
                 CreatedDate = DateTime.Now
@@ -75,11 +75,6 @@ namespace Lib_System.Services
         {
             var result = new ServiceResult();
 
-            if (await _userRepository.EmailExistsAsync(vm.Email, id))
-            {
-                result.AddError("Email", "This email is already registered.");
-            }
-
             if (await _userRepository.UsernameExistsAsync(vm.Username, id))
             {
                 result.AddError("Username", "This username is already taken.");
@@ -94,14 +89,13 @@ namespace Lib_System.Services
             if (user == null) return false;
 
             user.Name = vm.Name;
-            user.Email = vm.Email;
             user.Username = vm.Username;
             user.Phone = vm.Phone;
             user.Address = vm.Address;
-            user.Status = vm.Status;
             user.RoleId = vm.RoleId;
-
-            // Blank password on Edit means "keep the current password".
+            // Email is deliberately not editable here - see Views/User/Edit.cshtml.
+            // If a password is provided on edit, hash and update it; an empty
+            // password means keep the current password.
             if (!string.IsNullOrWhiteSpace(vm.Password))
             {
                 user.PasswordHash = _passwordHasher.HashPassword(user, vm.Password);

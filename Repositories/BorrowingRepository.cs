@@ -19,6 +19,7 @@ namespace Lib_System.Repositories
             var query = _context.Borrowings
                 .Include(b => b.Book)
                 .Include(b => b.User)
+                .Include(b => b.Payments)
                 .AsQueryable();
 
             if (restrictToUserId.HasValue)

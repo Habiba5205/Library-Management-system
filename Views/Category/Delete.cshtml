@@ -29,7 +29,11 @@
 
     <form asp-action="Delete">
         <input type="hidden" asp-for="CategoryId" />
-        <input type="submit" value="Delete" class="btn btn-danger" />
+        <input type="submit" value="Delete" class="btn btn-danger" disabled="@( !ViewData.ModelState.IsValid ? "disabled" : null )" />
         <a asp-action="Index" class="btn btn-secondary">Cancel</a>
     </form>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <p class="text-muted mt-2"><em>Deletion is disabled: please resolve the issues shown above (for example, reassign or remove books in this category).</em></p>
+    }
 </div>

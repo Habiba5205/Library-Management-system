@@ -16,7 +16,7 @@ namespace Lib_System.Repositories
 
         public async Task<List<Category>> GetAllAsync()
         {
-            return await _context.Categories.OrderByDescending(c => c.CategoryId).ToListAsync();
+            return await _context.Categories.Include(c => c.Books).OrderByDescending(c => c.CategoryId).ToListAsync();
         }
 
         public async Task<Category?> GetByIdAsync(int id)
