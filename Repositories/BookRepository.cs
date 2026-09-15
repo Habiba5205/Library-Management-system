@@ -106,6 +106,11 @@ namespace Lib_System.Repositories
 
         public async Task RemoveAsync(Book book)
         {
+            // If the book has historical borrowings, remove them first so FK constraints don't block deletion.
+            if (book.Borrowings != null && book.Borrowings.Any())
+            {
+                _context.Borrowings.RemoveRange(book.Borrowings);
+            }
             _context.Books.Remove(book);
             await Task.CompletedTask;
         }

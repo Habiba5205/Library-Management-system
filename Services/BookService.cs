@@ -180,10 +180,11 @@ namespace Lib_System.Services
                 return result;
             }
 
-            if (book.Borrowings.Any())
+            // Allow deletion when the book only has past borrowing history.
+            // Block deletion only if there are active reservations/borrowings or early-return requests.
+            if (book.Borrowings.Any(b => b.Status is "Reserved" or "Borrowed" or "Early Return Requested"))
             {
-                result.AddError(
-                    "This book cannot be deleted because it has borrowing history. Resolve or remove the related borrowings first.");
+                result.AddError("This book cannot be deleted because it has an active reservation or borrowing. Resolve them first.");
                 return result;
             }
 

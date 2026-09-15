@@ -32,23 +32,25 @@
 </div>
 
 @{
-    bool hasBorrowings = Model.Borrowings != null && Model.Borrowings.Any();
+    var borrowings = Model.Borrowings ?? Enumerable.Empty<Lib_System.Models.Borrowing>();
+    bool hasAnyBorrowings = borrowings.Any();
+    bool hasActiveBorrowings = borrowings.Any(b => b.Status is "Reserved" or "Borrowed" or "Early Return Requested");
     bool protectedStatus = Model.AvailabilityStatus is "Borrowed" or "Reserved";
 }
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="BookId" />
-    <input type="submit" value="Delete" class="btn btn-danger" disabled="@((hasBorrowings || protectedStatus || !ViewData.ModelState.IsValid) ? "disabled" : null)" />
+    <input type="submit" value="Delete" class="btn btn-danger" disabled="@((hasActiveBorrowings || protectedStatus || !ViewData.ModelState.IsValid) ? "disabled" : null)" />
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
-@if (hasBorrowings)
+@if (hasAnyBorrowings && !hasActiveBorrowings)
 {
     <p class="text-muted mt-2">
-        <em>Deletion is disabled because this book has a borrowing history.</em>
+        <em>Note: This book has past borrowing history. It can be deleted because there are no active reservations or borrowings.</em>
     </p>
 }
-@if (protectedStatus)
+@if (hasActiveBorrowings)
 {
-    <p class="text-danger mt-2">This book cannot be deleted while its status is Borrowed or Reserved.</p>
+    <p class="text-danger mt-2">This book cannot be deleted because it has an active reservation or borrowing.</p>
 }
